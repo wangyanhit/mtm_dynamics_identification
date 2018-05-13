@@ -11,12 +11,16 @@ pi = sym('pi');
 % Serial link method
 syms q1 q2 q3 q4 q5 q6 q7 real;
 syms dq1 dq2 dq3 dq4 dq5 dq6 dq7 real;
+syms ddq1 ddq2 ddq3 ddq4 ddq5 ddq6 ddq7 real;
 q = [q1 q2 q3 q4 q5 q6 q7];
 q2p = q2 + q3;
 q2pp = -q3;
 dq = [dq1 dq2 dq3 dq4 dq5 dq6 dq7];
 dq2p = dq2 + dq3;
 dq2pp = -dq3;
+dq = [ddq1 ddq2 ddq3 ddq4 ddq5 ddq6 ddq7];
+ddq2p = ddq2 + ddq3;
+ddq2pp = -ddq3;
 
 %%
 % paralell link method
@@ -109,9 +113,13 @@ syms Lxx3 Lxy3 Lxz3 Lyy3 Lyz3 Lzz3 lx3 ly3 lz3 m3 real;
 %%
 % Linear and rotational velocities of link mass centers 
 % Tranformations for mass centers
-T01_mc = T01*trans_mat(r1);
-T02_mc = T02*trans_mat(r2);
-T03_mc = T03*trans_mat(r3);
+T01_mc = simplify(T01*trans_mat(r1));
+T02_mc = simplify(T02*trans_mat(r2));
+T03_mc = simplify(T03*trans_mat(r3));
+
+p01_mc = T01_mc(1:3,4);
+p02_mc = T02_mc(1:3,4);
+p03_mc = T03_mc(1:3,4);
 
 syms t real;
 syms q1t(t) q2t(t) q3t(t)
@@ -140,18 +148,47 @@ w03_mc = simplify(so3ToVec(dT03_mc(1:3, 1:3)*T03_mc(1:3,1:3).'));
 v03_mc = dT03_mc(1:3, 4);
 
 %%
-% Define kinetic energy
-K = 1/2*m1*v01_mc.'*v01_mc + 1/2*m2*v02_mc.'*v02_mc + 1/2*m3*v03_mc.'*v03_mc;
-K = K + 1/2*w01_mc.'*inertia_tensor2world(T01_mc, I1)*w01_mc +...
+% Kinetic energy
+Ke = 1/2*m1*v01_mc.'*v01_mc + 1/2*m2*v02_mc.'*v02_mc + 1/2*m3*v03_mc.'*v03_mc;
+Ke = Ke + 1/2*w01_mc.'*inertia_tensor2world(T01_mc, I1)*w01_mc +...
     1/2*w02_mc.'*inertia_tensor2world(T02_mc, I2)*w02_mc +...
     1/2*w03_mc.'*inertia_tensor2world(T03_mc, I3)*w03_mc;
-K = simplify(K);
+Ke = simplify(Ke);
 
+%%
+% Potential energy
+g = [0 0 -0.981];
+Pe = simplify(dot(p01_mc, -g)*m1 + dot(p02_mc, -g)*m2 + dot(p03_mc, -g)*m3);
+
+%%
+% Lagrangian
+L = Ke - Pe;
+
+tau1 = subs(diff(subs(diff(L, dq1), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
+    {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
+    - diff(L, q1);
+% tau1 = simplify(tau1);
+tau2 = subs(diff(subs(diff(L, dq2), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
+    {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
+    - diff(L, q2);
+% assume(m2 ~= 0);
+% assume(m3 ~= 0);
+% tau2 = simplify(tau2);
+tau3 = subs(diff(subs(diff(L, dq3), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
+    {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
+    - diff(L, q3);
+% assume(m2 ~= 0);
+% assume(m3 ~= 0);
+% tau3 = simplify(tau3);
+
+Tau = [tau1; tau2; tau3];
 %%
 % Write energy function in linear equation of inertia parameters
 X = [delta_L1; delta_L2; delta_L3];
-h = equationsToMatrix(K, X);
-
+% Energy
+%h = equationsToMatrix(L, X);
+% Torque
+h = equationsToMatrix(Tau, X);
 %%
 % Calculate base parameters
 % This method is refered to the following papar
@@ -164,9 +201,12 @@ q3_rand = (rand(rand_num,1)-0.5)*6.28;
 dq1_rand = (rand(rand_num,1)-0.5)*6.28;
 dq2_rand = (rand(rand_num,1)-0.5)*6.28;
 dq3_rand = (rand(rand_num,1)-0.5)*6.28;
+ddq1_rand = (rand(rand_num,1)-0.5)*6.28;
+ddq2_rand = (rand(rand_num,1)-0.5)*6.28;
+ddq3_rand = (rand(rand_num,1)-0.5)*6.28;
 W = [];
 for i=1:rand_num
-    W(i,:) = subs(h, {q1, q2, q3, dq1, dq2, dq3}, {q1_rand(i), q2_rand(i), q3_rand(i), dq1_rand(i), dq2_rand(i), dq3_rand(i)});
+    W(i*3-2:i*3,:) = subs(h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3}, {q1_rand(i), q2_rand(i), q3_rand(i), dq1_rand(i), dq2_rand(i), dq3_rand(i), ddq1_rand(i), ddq2_rand(i), ddq3_rand(i)});
 end
 
 b = rank(W);
@@ -185,16 +225,34 @@ small_indices = find(abs(R1invR2) < 0.000001);
 R1invR2(small_indices) = 0;
 XB1 = X1 + R1invR2*X2;
 % W1*XB1=K
+% Numerical validation
+% Or symbolic validation
+%W = h;
+
 Wp = W*P;
 W1 = Wp(:,1:b);
 W2 = Wp(:,b+1:end);
 
 %%
 % Validation of this reduction
-K_err = W1*XB1-W*X;
+K_err = simplify(W1*XB1-W*X);
 [h_err] = equationsToMatrix(K_err, X);
+vpa(h_err, 2)
 disp("The number of errors which are larger than 0.000001 is:");
 find(abs(h_err)>0.000001)
+
+
+%% Optimal Trajctory Generation
+h_b = h*P(:,1:b);
+tr.h_b = h_b;
+% Fundamental frequency
+w_f = 2*pi*0.1;
+% Number of harmonics
+n_H = 4;
+tr = optimal_exciting_traj(h_b, n_H, w_f);
+
+
+
 %%
 % Visualization to see if the transformations are right
 % figure
