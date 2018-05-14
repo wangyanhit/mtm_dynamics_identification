@@ -104,12 +104,17 @@ end
 %%
 % Define inertia parameters
 syms Lxx1 Lxy1 Lxz1 Lyy1 Lyz1 Lzz1 lx1 ly1 lz1 m1 real;
+syms Fv1 Fc1 Fo1 real;
 [delta_L1, r1, I1] = inertia_bary2std(Lxx1, Lxy1, Lxz1, Lyy1, Lyz1, Lzz1, lx1, ly1, lz1, m1);
+delta_A1 = [Fv1; Fc1; Fo1];
 syms Lxx2 Lxy2 Lxz2 Lyy2 Lyz2 Lzz2 lx2 ly2 lz2 m2 real;
+syms Fv2 Fc2 Fo2 real;
 [delta_L2, r2, I2] = inertia_bary2std(Lxx2, Lxy2, Lxz2, Lyy2, Lyz2, Lzz2, lx2, ly2, lz2, m2);
+delta_A2 = [Fv2; Fc2; Fo2];
 syms Lxx3 Lxy3 Lxz3 Lyy3 Lyz3 Lzz3 lx3 ly3 lz3 m3 real;
+syms Fv3 Fc3 Fo3 real;
 [delta_L3, r3, I3] = inertia_bary2std(Lxx3, Lxy3, Lxz3, Lyy3, Lyz3, Lzz3, lx3, ly3, lz3, m3);
-
+delta_A3 = [Fv3; Fc3; Fo3];
 %%
 % Linear and rotational velocities of link mass centers 
 % Tranformations for mass centers
@@ -166,25 +171,25 @@ L = Ke - Pe;
 
 tau1 = subs(diff(subs(diff(L, dq1), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
-    - diff(L, q1);
+    - diff(L, q1)...
+    + Fv1*dq1 + Fc1*sign(dq1) + Fo1;
 % tau1 = simplify(tau1);
 tau2 = subs(diff(subs(diff(L, dq2), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
-    - diff(L, q2);
-% assume(m2 ~= 0);
-% assume(m3 ~= 0);
+    - diff(L, q2)...
+    + Fv2*dq2 + Fc2*sign(dq2) + Fo2;
 % tau2 = simplify(tau2);
 tau3 = subs(diff(subs(diff(L, dq3), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
-    - diff(L, q3);
-% assume(m2 ~= 0);
-% assume(m3 ~= 0);
+    - diff(L, q3)...
+    + Fv3*dq3 + Fc3*sign(dq3) + Fo3;
 % tau3 = simplify(tau3);
 
 Tau = [tau1; tau2; tau3];
 %%
 % Write energy function in linear equation of inertia parameters
-X = [delta_L1; delta_L2; delta_L3];
+%X = [delta_L1; delta_L2; delta_L3];
+X = [delta_L1; delta_A1; delta_L2; delta_A2; delta_L3; delta_A3];
 % Energy
 %h = equationsToMatrix(L, X);
 % Torque
@@ -250,7 +255,7 @@ w_f = 2*pi*0.1;
 % Number of harmonics
 n_H = 4;
 tr = optimal_exciting_traj(h_b, n_H, w_f);
-
+plot_excitation_traj(tr);
 
 
 %%
