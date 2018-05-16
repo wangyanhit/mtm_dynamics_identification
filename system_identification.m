@@ -254,7 +254,15 @@ tr.h_b = h_b;
 w_f = 2*pi*0.1;
 % Number of harmonics
 n_H = 4;
-tr = optimal_exciting_traj(h_b, n_H, w_f);
+tr_file_name = "data/tr.mat";
+% if file exists, load it; otherwise, compute one.
+if 2 == exist(tr_file_name)
+    load(tr_file_name);
+else
+    tr = optimal_exciting_traj(h_b, n_H, w_f);
+    save(tr_file_name, "tr")
+end
+
 plot_excitation_traj(tr);
 
 
