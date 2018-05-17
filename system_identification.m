@@ -265,7 +265,92 @@ end
 
 plot_excitation_traj(tr);
 
+%% Experiment data processing
 
+%%
+% Loading data
+q1_file_name = "data/experiment_data/outer_yaw_joint_states.csv";
+q1_data_raw = csvread(q1_file_name);
+q2_file_name = "data/experiment_data/shoulder_pitch_joint_states.csv";
+q2_data_raw = csvread(q2_file_name);
+q3_file_name = "data/experiment_data/elbow_pitch_joint_states.csv";
+q3_data_raw = csvread(q3_file_name);
+
+%%
+% Get Acceleration by differentiation
+sampling_freq = 100;
+% d_t = 1/sampling_freq;
+% dq_f = q1_data_raw(3:end, 2);
+% dq_b = q1_data_raw(1:end-2, 2);
+% 
+% q1_data = zeros(size(q1_data_raw, 1)-2, size(q1_data_raw, 2)+1);
+% q1_data(:,1:2) = q1_data_raw(2:end-1,1:2);
+% q1_data(:,3) = (dq_f -dq_b)/(2*d_t);
+% q1_data(:,4) = q1_data_raw(2:end-1,3);
+q1_data = raw_data2data(q1_data_raw, sampling_freq);
+q2_data = raw_data2data(q2_data_raw, sampling_freq);
+q3_data = raw_data2data(q3_data_raw, sampling_freq);
+
+%%
+% filter design
+fc = 10;
+fs = sampling_freq;
+
+[b,a] = butter(10,fc/(fs/2));
+freqz(b,a)
+
+%%
+% filt data
+q1_data_filted = filt_data(q1_data, b, a);
+q2_data_filted = filt_data(q2_data, b, a);
+q3_data_filted = filt_data(q3_data, b, a);
+
+plot_data(q1_data, q2_data, q3_data, q1_data_filted, q2_data_filted, q3_data_filted, sampling_freq);
+
+%%
+% remove near zero velocity data
+vel_threshold = 0.03;
+[q1_data_no_zero, q2_data_no_zero, q3_data_no_zero] = remove_near_zero_vel_data(q1_data_filted,...
+    q2_data_filted, q3_data_filted, vel_threshold);
+
+
+%%
+% Generate regression matrix
+[W_data, b_data] = generate_regression_mat(q1_data_no_zero, q2_data_no_zero, q3_data_no_zero, h_b);
+
+%%
+% least square
+XB1_ols = pinv(W_data)*b_data;
+%%
+% predict torque
+predicted_vtau = W_data*XB1_ols;
+l = size(predicted_vtau,1)/3;
+predicted_tau1 = zeros(l,1);
+predicted_tau2 = zeros(l,1);
+predicted_tau3 = zeros(l,1);
+for i = 1:l
+    predicted_tau1(i) = predicted_vtau(3*(i-1)+1);
+    predicted_tau2(i) = predicted_vtau(3*(i-1)+2);
+    predicted_tau3(i) = predicted_vtau(3*(i-1)+3);
+end
+it =1:l;
+figure
+plot(it, q1_data_no_zero(:,4), it, predicted_tau1);
+figure
+plot(it, q2_data_no_zero(:,4), it, predicted_tau2);
+figure
+plot(it, q3_data_no_zero(:,4), it, predicted_tau3);
+%%
+% Filter design
+
+% Design a 7th order lowpass IIR elliptic filter with cutoff frequency of 75 Hz.
+
+% Fnorm = 75/(Fs/2); % Normalized frequency
+% df = designfilt('lowpassiir',...
+%                'PassbandFrequency',Fnorm,...
+%                'FilterOrder',7,...
+%                'PassbandRipple',1,...
+%                'StopbandAttenuation',60);
 %%
 % Visualization to see if the transformations are right
 % figure

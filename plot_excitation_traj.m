@@ -1,5 +1,5 @@
 function [] = plot_excitation_traj(tr)
-close all;
+%close all;
 
 
 T = 2*pi/tr.w_f;
