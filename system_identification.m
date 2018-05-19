@@ -198,53 +198,68 @@ h = equationsToMatrix(Tau, X);
 % Calculate base parameters
 % This method is refered to the following papar
 % Gautier, Maxime. "Numerical calculation of the base inertial parameters of robots." Journal of Field Robotics 8.4 (1991): 485-506.
-% Generate random data
-rand_num = length(h)+5;
-q1_rand = (rand(rand_num,1)-0.5)*6.28;
-q2_rand = (rand(rand_num,1)-0.5)*6.28;
-q3_rand = (rand(rand_num,1)-0.5)*6.28;
-dq1_rand = (rand(rand_num,1)-0.5)*6.28;
-dq2_rand = (rand(rand_num,1)-0.5)*6.28;
-dq3_rand = (rand(rand_num,1)-0.5)*6.28;
-ddq1_rand = (rand(rand_num,1)-0.5)*6.28;
-ddq2_rand = (rand(rand_num,1)-0.5)*6.28;
-ddq3_rand = (rand(rand_num,1)-0.5)*6.28;
-W = [];
-for i=1:rand_num
-    W(i*3-2:i*3,:) = subs(h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3}, {q1_rand(i), q2_rand(i), q3_rand(i), dq1_rand(i), dq2_rand(i), dq3_rand(i), ddq1_rand(i), ddq2_rand(i), ddq3_rand(i)});
+b = 0;
+P = [];
+b_file_name = "data/b.mat";
+P_file_name = "data/P.mat";
+% if file exists, load it; otherwise, compute one.
+if 2 == exist(b_file_name) & 2 == exist(P_file_name)
+    load(b_file_name);
+    load(P_file_name);
+else
+    % Generate random data
+    rand_num = length(h)+5;
+    q1_rand = (rand(rand_num,1)-0.5)*6.28;
+    q2_rand = (rand(rand_num,1)-0.5)*6.28;
+    q3_rand = (rand(rand_num,1)-0.5)*6.28;
+    dq1_rand = (rand(rand_num,1)-0.5)*6.28;
+    dq2_rand = (rand(rand_num,1)-0.5)*6.28;
+    dq3_rand = (rand(rand_num,1)-0.5)*6.28;
+    ddq1_rand = (rand(rand_num,1)-0.5)*6.28;
+    ddq2_rand = (rand(rand_num,1)-0.5)*6.28;
+    ddq3_rand = (rand(rand_num,1)-0.5)*6.28;
+    W = [];
+    for i=1:rand_num
+        W(i*3-2:i*3,:) = subs(h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3}, {q1_rand(i), q2_rand(i), q3_rand(i), dq1_rand(i), dq2_rand(i), dq3_rand(i), ddq1_rand(i), ddq2_rand(i), ddq3_rand(i)});
+    end
+
+    b = rank(W);
+    c = length(X);
+    % H*P = Q*R
+    [Q R P] = qr(W);
+    Xp = P'*X;
+    X1 = Xp(1:b,:);
+    X2 = Xp(b+1:end,:);
+    [Q, R] = qr(W*P);
+    R1 = R(1:b,1:b);
+    R2 = R(1:b, b+1:end);
+    % remove zero terms caused by computational precision
+    R1invR2 = inv(R1)*R2;
+    small_indices = find(abs(R1invR2) < 0.000001);
+    R1invR2(small_indices) = 0;
+    XB1 = X1 + R1invR2*X2;
+    % W1*XB1=K
+    % Numerical validation
+    % Or symbolic validation
+    %W = h;
+
+    Wp = W*P;
+    W1 = Wp(:,1:b);
+    W2 = Wp(:,b+1:end);
+    %%
+    % Validation of this reduction
+    K_err = simplify(W1*XB1-W*X);
+    [h_err] = equationsToMatrix(K_err, X);
+    vpa(h_err, 2)
+    disp("The number of errors which are larger than 0.000001 is:");
+    find(abs(h_err)>0.000001)
+    
+    save(b_file_name, "b")
+    save(P_file_name, "P")
 end
 
-b = rank(W);
-c = length(X);
-% H*P = Q*R
-[Q R P] = qr(W);
-Xp = P'*X;
-X1 = Xp(1:b,:);
-X2 = Xp(b+1:end,:);
-[Q, R] = qr(W*P);
-R1 = R(1:b,1:b);
-R2 = R(1:b, b+1:end);
-% remove zero terms caused by computational precision
-R1invR2 = inv(R1)*R2;
-small_indices = find(abs(R1invR2) < 0.000001);
-R1invR2(small_indices) = 0;
-XB1 = X1 + R1invR2*X2;
-% W1*XB1=K
-% Numerical validation
-% Or symbolic validation
-%W = h;
 
-Wp = W*P;
-W1 = Wp(:,1:b);
-W2 = Wp(:,b+1:end);
 
-%%
-% Validation of this reduction
-K_err = simplify(W1*XB1-W*X);
-[h_err] = equationsToMatrix(K_err, X);
-vpa(h_err, 2)
-disp("The number of errors which are larger than 0.000001 is:");
-find(abs(h_err)>0.000001)
 
 
 %% Optimal Trajctory Generation
@@ -255,8 +270,9 @@ w_f = 2*pi*0.1;
 % Number of harmonics
 n_H = 4;
 tr_file_name = "data/tr.mat";
+regenerate_trajectory = 0;
 % if file exists, load it; otherwise, compute one.
-if 2 == exist(tr_file_name)
+if 2 == exist(tr_file_name) && regenerate_trajectory == 0
     load(tr_file_name);
 else
     tr = optimal_exciting_traj(h_b, n_H, w_f);
@@ -269,11 +285,11 @@ plot_excitation_traj(tr);
 
 %%
 % Loading data
-q1_file_name = "data/experiment_data/outer_yaw_joint_states.csv";
+q1_file_name = "data/experiment_data/50s/outer_yaw_joint_states.csv";
 q1_data_raw = csvread(q1_file_name);
-q2_file_name = "data/experiment_data/shoulder_pitch_joint_states.csv";
+q2_file_name = "data/experiment_data/50s/shoulder_pitch_joint_states.csv";
 q2_data_raw = csvread(q2_file_name);
-q3_file_name = "data/experiment_data/elbow_pitch_joint_states.csv";
+q3_file_name = "data/experiment_data/50s/elbow_pitch_joint_states.csv";
 q3_data_raw = csvread(q3_file_name);
 
 %%
@@ -292,12 +308,18 @@ q2_data = raw_data2data(q2_data_raw, sampling_freq);
 q3_data = raw_data2data(q3_data_raw, sampling_freq);
 
 %%
+% remove abnormal acceleration data
+max_acc = 2.5;
+max_vel_change = 0.3;
+[q1_data, q2_data, q3_data] = remove_abnormal_acc_data(q1_data, q2_data, q3_data, max_acc, max_vel_change);
+
+%%
 % filter design
-fc = 10;
+fc = 5;
 fs = sampling_freq;
 
-[b,a] = butter(10,fc/(fs/2));
-freqz(b,a)
+[b_f,a_f] = butter(10,fc/(fs/2));
+freqz(b_f,a_f)
 
 %%
 % filt data
@@ -308,7 +330,7 @@ q3_data_filted = filt_data(q3_data, b, a);
 plot_data(q1_data, q2_data, q3_data, q1_data_filted, q2_data_filted, q3_data_filted, sampling_freq);
 
 %%
-% remove near zero velocity data
+% remove near zero velocity data and outlier
 vel_threshold = 0.03;
 [q1_data_no_zero, q2_data_no_zero, q3_data_no_zero] = remove_near_zero_vel_data(q1_data_filted,...
     q2_data_filted, q3_data_filted, vel_threshold);
@@ -335,11 +357,19 @@ for i = 1:l
 end
 it =1:l;
 figure
+subplot(3,1,1)
 plot(it, q1_data_no_zero(:,4), it, predicted_tau1);
-figure
+subplot(3,1,2)
 plot(it, q2_data_no_zero(:,4), it, predicted_tau2);
-figure
+subplot(3,1,3)
 plot(it, q3_data_no_zero(:,4), it, predicted_tau3);
+
+%%
+%
+% variance of the regression error
+var_reg_error_ols = norm(b_data - W_data*XB1_ols)/(length(b_data) - b);
+% standard deviation of XB1_ols
+std_XB1_ols = sqrt(diag(var_reg_error_ols*inv(W_data.'*W_data)));
 %%
 % Filter design
 
