@@ -323,9 +323,9 @@ freqz(b_f,a_f)
 
 %%
 % filt data
-q1_data_filted = filt_data(q1_data, b, a);
-q2_data_filted = filt_data(q2_data, b, a);
-q3_data_filted = filt_data(q3_data, b, a);
+q1_data_filted = filt_data(q1_data, b_f, a_f);
+q2_data_filted = filt_data(q2_data, b_f, a_f);
+q3_data_filted = filt_data(q3_data, b_f, a_f);
 
 plot_data(q1_data, q2_data, q3_data, q1_data_filted, q2_data_filted, q3_data_filted, sampling_freq);
 
@@ -358,18 +358,68 @@ end
 it =1:l;
 figure
 subplot(3,1,1)
-plot(it, q1_data_no_zero(:,4), it, predicted_tau1);
+plot(it, q1_data_no_zero(:,4), it, predicted_tau1, it, predicted_tau1-q1_data_no_zero(:,4));
 subplot(3,1,2)
-plot(it, q2_data_no_zero(:,4), it, predicted_tau2);
+plot(it, q2_data_no_zero(:,4), it, predicted_tau2, it, predicted_tau2-q2_data_no_zero(:,4));
 subplot(3,1,3)
-plot(it, q3_data_no_zero(:,4), it, predicted_tau3);
-
+plot(it, q3_data_no_zero(:,4), it, predicted_tau3, it, predicted_tau3-q3_data_no_zero(:,4));
+clear it l;
 %%
 %
 % variance of the regression error
 var_reg_error_ols = norm(b_data - W_data*XB1_ols)/(length(b_data) - b);
 % standard deviation of XB1_ols
 std_XB1_ols = sqrt(diag(var_reg_error_ols*inv(W_data.'*W_data)));
+% percentage of standard deviation of XB1_ols
+pecent_std_XB1_ols = std_XB1_ols./abs(XB1_ols);
+
+%%
+% weighted least square
+
+% variance of regression error of each joint
+joint1_mask = 1:3:size(W_data,1);
+joint2_mask = (1:3:size(W_data,1))+1;
+joint3_mask = (1:3:size(W_data,1))+2;
+var_error_ols_joint1 = norm(b_data(joint1_mask,:) - W_data(joint1_mask,:)*XB1_ols)...
+    /(length(joint1_mask) - b);
+var_error_ols_joint2 = norm(b_data(joint2_mask,:) - W_data(joint2_mask,:)*XB1_ols)...
+    /(length(joint2_mask) - b);
+var_error_ols_joint3 = norm(b_data(joint3_mask,:) - W_data(joint3_mask,:)*XB1_ols)...
+    /(length(joint3_mask) - b);
+
+W_data_weight = W_data;
+W_data_weight(joint1_mask,:) = W_data(joint1_mask,:)/sqrt(var_error_ols_joint1);
+W_data_weight(joint2_mask,:) = W_data(joint2_mask,:)/sqrt(var_error_ols_joint2);
+W_data_weight(joint3_mask,:) = W_data(joint3_mask,:)/sqrt(var_error_ols_joint3);
+b_data_weight = b_data;
+b_data_weight(joint1_mask) = b_data(joint1_mask)/sqrt(var_error_ols_joint1);
+b_data_weight(joint2_mask) = b_data(joint2_mask)/sqrt(var_error_ols_joint2);
+b_data_weight(joint3_mask) = b_data(joint3_mask)/sqrt(var_error_ols_joint3);
+clear joint1_mask joint2_mask joint3_mask;
+
+XB1_wls = pinv(W_data_weight)*b_data_weight;
+
+%%
+% predict torque
+wls_predicted_vtau = W_data*XB1_wls;
+l = size(wls_predicted_vtau,1)/3;
+wls_predicted_tau1 = zeros(l,1);
+wls_predicted_tau2 = zeros(l,1);
+wls_predicted_tau3 = zeros(l,1);
+for i = 1:l
+    wls_predicted_tau1(i) = wls_predicted_vtau(3*(i-1)+1);
+    wls_predicted_tau2(i) = wls_predicted_vtau(3*(i-1)+2);
+    wls_predicted_tau3(i) = wls_predicted_vtau(3*(i-1)+3);
+end
+it =1:l;
+figure
+subplot(3,1,1)
+plot(it, q1_data_no_zero(:,4), it, wls_predicted_tau1);
+subplot(3,1,2)
+plot(it, q2_data_no_zero(:,4), it, wls_predicted_tau2);
+subplot(3,1,3)
+plot(it, q3_data_no_zero(:,4), it, wls_predicted_tau3);
+clear it l;
 %%
 % Filter design
 
