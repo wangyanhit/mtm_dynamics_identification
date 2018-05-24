@@ -271,7 +271,7 @@ w_f = 2*pi*0.1;
 % Number of harmonics
 n_H = 6;
 tr_file_name = "data/tr.mat";
-regenerate_trajectory = 0;
+regenerate_trajectory = 1;
 % if file exists, load it; otherwise, compute one.
 if 2 == exist(tr_file_name) && regenerate_trajectory == 0
     load(tr_file_name);
@@ -295,7 +295,7 @@ q3_data_raw = csvread(q3_file_name);
 
 %%
 % Get Acceleration by differentiation
-sampling_freq = 100;
+sampling_freq = 500;
 % d_t = 1/sampling_freq;
 % dq_f = q1_data_raw(3:end, 2);
 % dq_b = q1_data_raw(1:end-2, 2);
@@ -345,7 +345,7 @@ vel_threshold = 0.01;
 
 %%
 % least square
-XB1_ols = pinv(W_data)*b_data;
+XB1_ols = W_data\b_data;
 %%
 % predict torque
 predicted_vtau = W_data*XB1_ols;
@@ -422,7 +422,7 @@ b_data_weight(joint2_mask) = b_data(joint2_mask)/sqrt(var_error_ols_joint2);
 b_data_weight(joint3_mask) = b_data(joint3_mask)/sqrt(var_error_ols_joint3);
 clear joint1_mask joint2_mask joint3_mask;
 
-XB1_wls = pinv(W_data_weight)*b_data_weight;
+XB1_wls = W_data_weight\b_data_weight;
 
 %%
 % predict torque

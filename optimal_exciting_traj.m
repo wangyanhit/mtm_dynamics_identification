@@ -28,25 +28,25 @@ tr.min_ddq = -10;
 q_init_max = 0.1;
 ab_init_max = 0.1;
 
-q01 = rand()*q_init_max-q_init_max/2;
-a1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-b1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-q02 = rand()*q_init_max-q_init_max/2;
-a2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-b2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-q03 = rand()*q_init_max-q_init_max/2;
-a3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-b3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+% q01 = rand()*q_init_max-q_init_max/2;
+% a1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+% b1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+% q02 = rand()*q_init_max-q_init_max/2;
+% a2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+% b2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+% q03 = rand()*q_init_max-q_init_max/2;
+% a3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+% b3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
 
-% q01 = -0.2721;
-% a1 = [0.0694 -0.3526 0.7608 0.1043 0.1654 0.0560]*0.99;
-% b1 = [0.0138 0.3271 -0.0243 -0.3257 -0.1315 0.4086]*0.99;
-% q02 = -0.0186;
-% a2 = [0.0536 0.1499 -0.1590 -0.0349 -0.0703 -0.9585]*0.99;
-% b2 = [0.0458 -0.2422 0.0560 -0.1084 0.0322 -0.1254]*0.99;
-% q03 = 0.0379;
-% a3 = [0.0642 0.1795 -0.3514 0.3555 0.1985 0.8235]*0.99;
-% b3 = [0.0835 0.0456 -0.3276 0.0906 -0.1214 -0.3116]*0.99;
+q01 = -0.2721;
+a1 = [0.0694 -0.3526 0.7608 0.1043 0.1654 0.0560]*0.8;
+b1 = [0.0138 0.3271 -0.0243 -0.3257 -0.1315 0.4086]*0.8;
+q02 = -0.0186;
+a2 = [0.0536 0.1499 -0.1590 -0.0349 -0.0703 -0.9585]*0.8;
+b2 = [0.0458 -0.2422 0.0560 -0.1084 0.0322 -0.1254]*0.8;
+q03 = 0.0379;
+a3 = [0.0642 0.1795 -0.3514 0.3555 0.1985 0.8235]*0.8;
+b3 = [0.0835 0.0456 -0.3276 0.0906 -0.1214 -0.3116]*0.8;
 
 
 x0 = [q01 a1 b1 q02 a2 b2 q03 a3 b3];
