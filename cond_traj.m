@@ -1,7 +1,7 @@
 function [cond_num] = cond_traj(v, tr)
-% syms q1 q2 q3 q4 q5 q6 q7 real;
-% syms dq1 dq2 dq3 dq4 dq5 dq6 dq7 real;
-% syms ddq1 ddq2 ddq3 ddq4 ddq5 ddq6 ddq7 real;
+syms q1 q2 q3 real;
+syms dq1 dq2 dq3 real;
+syms ddq1 ddq2 ddq3 real;
 
 % q01 = v(1);
 % a1 = v(1+1:1+tr.n_H);
@@ -36,17 +36,17 @@ for k = 1:t_num
     for j = 1:tr.dof
         for i =1:tr.n_H
             qi(j) = qi(j)+v((j-1)*f_num+1+i)/(tr.w_f*i)*sin(tr.w_f*i*t)...
-                -v((j-1)*f_num+tr.n_H+i)/(tr.w_f*i)*cos(tr.w_f*i*t);
+                -v((j-1)*f_num+tr.n_H+1+i)/(tr.w_f*i)*cos(tr.w_f*i*t);
             dqi(j) = dqi(j)+v((j-1)*f_num+1+i)*cos(tr.w_f*i*t)...
-                +v((j-1)*f_num+tr.n_H+i)*sin(tr.w_f*i*t);
+                +v((j-1)*f_num+tr.n_H+1+i)*sin(tr.w_f*i*t);
             ddqi(j) = ddqi(j)-v((j-1)*f_num+1+i)*(tr.w_f*i)*sin(tr.w_f*i*t)...
-                +v((j-1)*f_num+tr.n_H+i)*(tr.w_f*i)*cos(tr.w_f*i*t);    
+                +v((j-1)*f_num+tr.n_H+1+i)*(tr.w_f*i)*cos(tr.w_f*i*t);    
         end
     end
 %     H = [H;subs(h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3},...
 %         {qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3)})];
 %     H = [H; h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3))];
-    H(3*(k-1)+1:3*(k-1)+3,:) = h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3));
+    H(3*(k-1)+1:3*(k-1)+3,:) = subs(tr.h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3}, {qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3)});% h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3));
 end
 %vpa(H,2)
 %size(H)

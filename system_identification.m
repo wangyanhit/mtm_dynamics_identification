@@ -107,14 +107,17 @@ syms Lxx1 Lxy1 Lxz1 Lyy1 Lyz1 Lzz1 lx1 ly1 lz1 m1 real;
 syms Fv1 Fc1 Fo1 real;
 [delta_L1, r1, I1] = inertia_bary2std(Lxx1, Lxy1, Lxz1, Lyy1, Lyz1, Lzz1, lx1, ly1, lz1, m1);
 delta_A1 = [Fv1; Fc1; Fo1];
+%delta_A1 = [];
 syms Lxx2 Lxy2 Lxz2 Lyy2 Lyz2 Lzz2 lx2 ly2 lz2 m2 real;
 syms Fv2 Fc2 Fo2 real;
 [delta_L2, r2, I2] = inertia_bary2std(Lxx2, Lxy2, Lxz2, Lyy2, Lyz2, Lzz2, lx2, ly2, lz2, m2);
 delta_A2 = [Fv2; Fc2; Fo2];
+%delta_A2 = [];
 syms Lxx3 Lxy3 Lxz3 Lyy3 Lyz3 Lzz3 lx3 ly3 lz3 m3 real;
 syms Fv3 Fc3 Fo3 real;
 [delta_L3, r3, I3] = inertia_bary2std(Lxx3, Lxy3, Lxz3, Lyy3, Lyz3, Lzz3, lx3, ly3, lz3, m3);
 delta_A3 = [Fv3; Fc3; Fo3];
+%delta_A3 = [];
 %%
 % Linear and rotational velocities of link mass centers 
 % Tranformations for mass centers
@@ -198,68 +201,66 @@ h = equationsToMatrix(Tau, X);
 % Calculate base parameters
 % This method is refered to the following papar
 % Gautier, Maxime. "Numerical calculation of the base inertial parameters of robots." Journal of Field Robotics 8.4 (1991): 485-506.
-b = 0;
-P = [];
-b_file_name = "data/b.mat";
-P_file_name = "data/P.mat";
-% if file exists, load it; otherwise, compute one.
-if 2 == exist(b_file_name) & 2 == exist(P_file_name)
-    load(b_file_name);
-    load(P_file_name);
+
+rand_var_file_name = "data/rand_var.mat";
+rand_var.rand_num = length(h)+5;
+
+if 2 == exist(rand_var_file_name)
+    load(rand_var_file_name)
 else
     % Generate random data
-    rand_num = length(h)+5;
-    q1_rand = (rand(rand_num,1)-0.5)*6.28;
-    q2_rand = (rand(rand_num,1)-0.5)*6.28;
-    q3_rand = (rand(rand_num,1)-0.5)*6.28;
-    dq1_rand = (rand(rand_num,1)-0.5)*6.28;
-    dq2_rand = (rand(rand_num,1)-0.5)*6.28;
-    dq3_rand = (rand(rand_num,1)-0.5)*6.28;
-    ddq1_rand = (rand(rand_num,1)-0.5)*6.28;
-    ddq2_rand = (rand(rand_num,1)-0.5)*6.28;
-    ddq3_rand = (rand(rand_num,1)-0.5)*6.28;
-    W = [];
-    for i=1:rand_num
-        W(i*3-2:i*3,:) = subs(h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3}, {q1_rand(i), q2_rand(i), q3_rand(i), dq1_rand(i), dq2_rand(i), dq3_rand(i), ddq1_rand(i), ddq2_rand(i), ddq3_rand(i)});
-    end
+    rand_var.rand_num = length(h)+5;
+    rand_var.q1_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
+    rand_var.q2_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
+    rand_var.q3_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
+    rand_var.dq1_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
+    rand_var.dq2_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
+    rand_var.dq3_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
+    rand_var.ddq1_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
+    rand_var.ddq2_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
+    rand_var.ddq3_rand = (rand(rand_var.rand_num,1)-0.5)*6.28;
 
-    b = rank(W);
-    c = length(X);
-    % H*P = Q*R
-    [Q R P] = qr(W);
-    Xp = P'*X;
-    X1 = Xp(1:b,:);
-    X2 = Xp(b+1:end,:);
-    [Q, R] = qr(W*P);
-    R1 = R(1:b,1:b);
-    R2 = R(1:b, b+1:end);
-    % remove zero terms caused by computational precision
-    R1invR2 = inv(R1)*R2;
-    small_indices = find(abs(R1invR2) < 0.000001);
-    R1invR2(small_indices) = 0;
-    XB1 = X1 + R1invR2*X2;
-    % W1*XB1=K
-    % Numerical validation
-    % Or symbolic validation
-    %W = h;
-
-    Wp = W*P;
-    W1 = Wp(:,1:b);
-    W2 = Wp(:,b+1:end);
-    %%
-    % Validation of this reduction
-    K_err = simplify(W1*XB1-W*X);
-    [h_err] = equationsToMatrix(K_err, X);
-    vpa(h_err, 2)
-    disp("The number of errors which are larger than 0.000001 is:");
-    find(abs(h_err)>0.000001)
-    
-    save(b_file_name, "b")
-    save(P_file_name, "P")
+    save(rand_var_file_name, "rand_var")
 end
 
+W = [];
+for i=1:rand_var.rand_num
+    W(i*3-2:i*3,:) = subs(h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3},...
+        {rand_var.q1_rand(i), rand_var.q2_rand(i), rand_var.q3_rand(i),...
+        rand_var.dq1_rand(i), rand_var.dq2_rand(i), rand_var.dq3_rand(i),...
+        rand_var.ddq1_rand(i), rand_var.ddq2_rand(i), rand_var.ddq3_rand(i)});
+end
 
+b = rank(W);
+c = length(X);
+% H*P = Q*R
+[Q R P] = qr(W);
+Xp = P'*X;
+X1 = Xp(1:b,:);
+X2 = Xp(b+1:end,:);
+[Q, R] = qr(W*P);
+R1 = R(1:b,1:b);
+R2 = R(1:b, b+1:end);
+% remove zero terms caused by computational precision
+R1invR2 = inv(R1)*R2;
+small_indices = find(abs(R1invR2) < 0.000001);
+R1invR2(small_indices) = 0;
+XB1 = X1 + R1invR2*X2;
+% W1*XB1=K
+% Numerical validation
+% Or symbolic validation
+%W = h;
 
+Wp = W*P;
+W1 = Wp(:,1:b);
+W2 = Wp(:,b+1:end);
+%%
+% Validation of this reduction
+K_err = simplify(W1*XB1-W*X);
+[h_err] = equationsToMatrix(K_err, X);
+vpa(h_err, 2)
+disp("The number of errors which are larger than 0.000001 is:");
+find(abs(h_err)>0.000001)
 
 
 %% Optimal Trajctory Generation
@@ -268,7 +269,7 @@ tr.h_b = h_b;
 % Fundamental frequency
 w_f = 2*pi*0.1;
 % Number of harmonics
-n_H = 4;
+n_H = 6;
 tr_file_name = "data/tr.mat";
 regenerate_trajectory = 0;
 % if file exists, load it; otherwise, compute one.
@@ -331,11 +332,13 @@ plot_data(q1_data, q2_data, q3_data, q1_data_filted, q2_data_filted, q3_data_fil
 
 %%
 % remove near zero velocity data and outlier
-vel_threshold = 0.03;
+vel_threshold = 0.01;
 [q1_data_no_zero, q2_data_no_zero, q3_data_no_zero] = remove_near_zero_vel_data(q1_data_filted,...
     q2_data_filted, q3_data_filted, vel_threshold);
 
-
+% q1_data_no_zero = q1_data_filted;
+% q2_data_no_zero = q2_data_filted;
+% q3_data_no_zero = q3_data_filted;
 %%
 % Generate regression matrix
 [W_data, b_data] = generate_regression_mat(q1_data_no_zero, q2_data_no_zero, q3_data_no_zero, h_b);
@@ -358,12 +361,34 @@ end
 it =1:l;
 figure
 subplot(3,1,1)
-plot(it, q1_data_no_zero(:,4), it, predicted_tau1, it, predicted_tau1-q1_data_no_zero(:,4));
+plot(it, q1_data_no_zero(:,4), it, predicted_tau1);
 subplot(3,1,2)
-plot(it, q2_data_no_zero(:,4), it, predicted_tau2, it, predicted_tau2-q2_data_no_zero(:,4));
+plot(it, q2_data_no_zero(:,4), it, predicted_tau2);
 subplot(3,1,3)
-plot(it, q3_data_no_zero(:,4), it, predicted_tau3, it, predicted_tau3-q3_data_no_zero(:,4));
+plot(it, q3_data_no_zero(:,4), it, predicted_tau3);
 clear it l;
+% %%
+% % Generate regression matrix
+% [W_raw_data, b_raw_data] = generate_regression_mat(q1_data, q2_data, q2_data, h_b);
+% predicted_vtau_raw = W_raw_data*XB1_ols;
+% l_raw = size(predicted_vtau_raw,1)/3;
+% predicted_tau1_raw = zeros(l_raw,1);
+% predicted_tau2_raw = zeros(l_raw,1);
+% predicted_tau3_raw = zeros(l_raw,1);
+% for i = 1:l_raw
+%     predicted_tau1(i) = predicted_vtau(3*(i-1)+1);
+%     predicted_tau2(i) = predicted_vtau(3*(i-1)+2);
+%     predicted_tau3(i) = predicted_vtau(3*(i-1)+3);
+% end
+% it =1:l_raw;
+% figure
+% subplot(3,1,1)
+% plot(it, q1_data_raw(:,4), it, predicted_tau1_raw);
+% subplot(3,1,2)
+% plot(it, q2_data_raw(:,4), it, predicted_tau2_raw);
+% subplot(3,1,3)
+% plot(it, q3_data_raw(:,4), it, predicted_tau3_raw);
+% clear it l_raw;
 %%
 %
 % variance of the regression error
