@@ -267,7 +267,8 @@ find(abs(h_err)>0.000001)
 h_b = h*P(:,1:b);
 tr.h_b = h_b;
 % Fundamental frequency
-w_f = 2*pi*0.1;
+PI = 3.1415926;
+w_f = 2*PI*0.125;
 % Number of harmonics
 n_H = 6;
 tr_file_name = "data/tr.mat";

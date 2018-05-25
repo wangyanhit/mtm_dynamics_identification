@@ -46,7 +46,7 @@ for k = 1:t_num
 %     H = [H;subs(h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3},...
 %         {qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3)})];
 %     H = [H; h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3))];
-    H(3*(k-1)+1:3*(k-1)+3,:) = subs(tr.h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3}, {qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3)});% h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3));
+    H(3*(k-1)+1:3*(k-1)+3,:) = double(subs(tr.h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3}, {qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3)}));% h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3));
 end
 %vpa(H,2)
 %size(H)
