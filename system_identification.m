@@ -22,6 +22,16 @@ dq = [ddq1 ddq2 ddq3 ddq4 ddq5 ddq6 ddq7];
 ddq2p = ddq2 + ddq3;
 ddq2pp = -ddq3;
 
+
+
+dyn.p = sym(pi()); 
+%My own DH from RViz and DH Paper
+dyn.beta=atan((.072613-.0296)/(.2961-.1524));
+
+% dyn.a      =    [ 0         ,                  0,               .150,                      .516,              .2881,     -.0430,               0,      0,     .0091,    .0102,    0];
+% dyn.alpha  =    [-dyn.p/2   ,           -dyn.p/2,                  0,                         0,                  0,    dyn.p/2,           0,     dyn.p/2,     -dyn.p/2,        0, -dyn.p/2];
+% dyn.d      =    [ 0.1524,                  .0296,                  0,                         0,                  0,          0,  .4162+gen.q(3),       0,        0,        0,    0];
+% dyn.tet    =    [ dyn.p/2   ,  -dyn.p/2+gen.q(1), -dyn.beta+gen.q(2), dyn.beta+dyn.p/2-gen.q(2),  -dyn.p/2+gen.q(2),   -dyn.p/2,      dyn.p/2,  dyn.p/2+gen.q(4),   dyn.p/2+gen.q(5),       gen.q(6), -dyn.p/2];
 %%
 % paralell link method
 % syms q1 q2 q2p q4 q5 q6 q7 t real;
@@ -36,44 +46,35 @@ ddq2pp = -ddq3;
 %%
 % Define DH parameters
 % Order: $a, \alpha, d \theta$
-dh_link1 = [0 pi/2 0 q1-pi/2]; % 1
-dh_link2 = [0.279 0 0 q2-pi/2]; % 1 to 2
-dh_link2p = [0.1 0 0 q2p]; % 1 to 2p
-dh_link2pp = [0.279 0 0 q2pp-pi/2]; % 2p to 2pp
-dh_link3 = [0.365 -pi/2 0 q3+pi/2]; % 2 to 3
-dh_link4 = [0 pi/2 0.151 q4]; % 3 to 4
-dh_link5 = [0 -pi/2 0 q5]; % 4 to 5
-dh_link6 = [0 pi/2 0 q6-pi/2]; % 5 to 6
-dh_link7 = [0 0 0 q7]; % 6 to 7
+dh_link0p = [0 -pi/2 0.1524 pi/2]; % 0 to 0p
+dh_link1 = [0 -pi/2 .0296 q1-pi/2]; %0p to 1
+dh_link2 = [0.150 0 0 q2-dyn.beta]; % 1 to 2
+dh_link2p = [0.516 0 0 -q2+pi/2+dyn.beta]; % 2 to 2p
+dh_link2pp = [0.2881 0 0 -pi/2+q2]; % 2p to 2pp
+dh_link2ppp = [-0.0430 pi/2 0 -pi/2]; % 2pp to 2ppp
+dh_link3 = [0 0 q3+0.4162 pi/2]; % 2ppp to 3
 
-T01 = dhparam2matrix(dh_link1);
+T00p = dhparam2matrix(dh_link0p);
+T0p1 = dhparam2matrix(dh_link1);
 T12 = dhparam2matrix(dh_link2);
-T23 = dhparam2matrix(dh_link3);
-T34 = dhparam2matrix(dh_link4);
-T45 = dhparam2matrix(dh_link5);
-T56 = dhparam2matrix(dh_link6);
-T67 = dhparam2matrix(dh_link7);
-T12p = dhparam2matrix(dh_link2p);
+T22p = dhparam2matrix(dh_link2p);
 T2p2pp = dhparam2matrix(dh_link2pp);
+T2pp2ppp = dhparam2matrix(dh_link2ppp);
+T2ppp3 = dhparam2matrix(dh_link3);
 
+T01 = T00p*T0p1;
 T02 = T01*T12;
-T03 = T02*T23;
-T04 = T03*T34;
-T05 = T04*T45;
-T06 = T05*T56;
-T07 = T06*T67;
-T02p = T01*T12p;
-T2pp = T02p*T2p2pp;
+T02p = T02*T22p;
+T02pp = T02p*T2p2pp;
+T02ppp = T02pp*T2pp2ppp;
+T03 = T02ppp*T2ppp3;
 
 T(:,:,1) = T01;
 T(:,:,2) = T02;
-T(:,:,3) = T03;
-T(:,:,4) = T04;
-T(:,:,5) = T05;
-T(:,:,6) = T06;
-T(:,:,7) = T07;
-T(:,:,8) = T02p;
-T(:,:,9) = T2pp;
+T(:,:,3) = T02p;
+T(:,:,4) = T02pp;
+T(:,:,5) = T02ppp;
+T(:,:,6) = T03;
 
 %%
 % Visualization to see if the transformations are right
@@ -82,9 +83,9 @@ if visualize_transform
     figure
     hold on
     axis equal
-    for idx = 1:9
+    for idx = 1:size(T,3)
         %T_num = subs(T(:,:,idx), {q1 q2 q2p q4 q5 q6 q7}, {0 0 0 0 0.2 0.0 0.4});
-        T_num = subs(T(:,:,idx), {q1 q2 q3 q4 q5 q6 q7}, {0 0.2 0 0 0.2 0.0 0.4});
+        T_num = subs(T(:,:,idx), {q1 q2 q3}, {0 0 0.3});
         p = T_num*([0 0 0 1]');
         x = T_num*([0.1 0 0 1]');
         y = T_num*([0 0.1 0 1]');
@@ -112,6 +113,15 @@ syms Lxx2 Lxy2 Lxz2 Lyy2 Lyz2 Lzz2 lx2 ly2 lz2 m2 real;
 syms Fv2 Fc2 Fo2 real;
 [delta_L2, r2, I2] = inertia_bary2std(Lxx2, Lxy2, Lxz2, Lyy2, Lyz2, Lzz2, lx2, ly2, lz2, m2);
 delta_A2 = [Fv2; Fc2; Fo2];
+syms Lxx2p Lxy2p Lxz2p Lyy2p Lyz2p Lzz2p lx2p ly2p lz2p m2p real;
+syms Fv2p Fc2p Fo2p real;
+[delta_L2p, r2p, I2p] = inertia_bary2std(Lxx2p, Lxy2p, Lxz2p, Lyy2p, Lyz2p, Lzz2p, lx2p, ly2p, lz2p, m2p);
+delta_A2p = [Fv2p; Fc2p; Fo2p];
+syms Lxx2pp Lxy2pp Lxz2pp Lyy2pp Lyz2pp Lzz2pp lx2pp ly2pp lz2pp m2pp real;
+syms Fv2pp Fc2pp Fo2pp real;
+[delta_L2pp, r2pp, I2pp] = inertia_bary2std(Lxx2pp, Lxy2pp, Lxz2pp, Lyy2pp, Lyz2pp, Lzz2pp, lx2pp, ly2pp, lz2pp, m2pp);
+delta_A2pp = [Fv2pp; Fc2pp; Fo2pp];
+
 %delta_A2 = [];
 syms Lxx3 Lxy3 Lxz3 Lyy3 Lyz3 Lzz3 lx3 ly3 lz3 m3 real;
 syms Fv3 Fc3 Fo3 real;
@@ -123,27 +133,39 @@ delta_A3 = [Fv3; Fc3; Fo3];
 % Tranformations for mass centers
 T01_mc = simplify(T01*trans_mat(r1));
 T02_mc = simplify(T02*trans_mat(r2));
+T02p_mc = simplify(T02p*trans_mat(r2p));
+T02pp_mc = simplify(T02pp*trans_mat(r2pp));
 T03_mc = simplify(T03*trans_mat(r3));
 
 p01_mc = T01_mc(1:3,4);
 p02_mc = T02_mc(1:3,4);
+p02p_mc = T02p_mc(1:3,4);
+p02pp_mc = T02pp_mc(1:3,4);
 p03_mc = T03_mc(1:3,4);
 
 syms t real;
 syms q1t(t) q2t(t) q3t(t)
 T01_mc_t = subs(T01_mc, {q1, q2, q3}, {q1t, q2t, q3t});
 T02_mc_t = subs(T02_mc, {q1, q2, q3}, {q1t, q2t, q3t});
+T02p_mc_t = subs(T02p_mc, {q1, q2, q3}, {q1t, q2t, q3t});
+T02pp_mc_t = subs(T02pp_mc, {q1, q2, q3}, {q1t, q2t, q3t});
 T03_mc_t = subs(T03_mc, {q1, q2, q3}, {q1t, q2t, q3t});
 
 dT01_mc_t = simplify(diff(T01_mc_t, t));
 dT02_mc_t = simplify(diff(T02_mc_t, t));
+dT02p_mc_t = simplify(diff(T02p_mc_t, t));
+dT02pp_mc_t = simplify(diff(T02pp_mc_t, t));
 dT03_mc_t = simplify(diff(T03_mc_t, t));
 
 dT01_mc = subs(dT01_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
 dT02_mc = subs(dT02_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
+dT02p_mc = subs(dT02p_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
+dT02pp_mc = subs(dT02pp_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
 dT03_mc = subs(dT03_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
 dT01_mc = subs(dT01_mc, {q1t, q2t, q3t}, {q1, q2, q3});
 dT02_mc = subs(dT02_mc, {q1t, q2t, q3t}, {q1, q2, q3});
+dT02p_mc = subs(dT02p_mc, {q1t, q2t, q3t}, {q1, q2, q3});
+dT02pp_mc = subs(dT02pp_mc, {q1t, q2t, q3t}, {q1, q2, q3});
 dT03_mc = subs(dT03_mc, {q1t, q2t, q3t}, {q1, q2, q3});
 w01_mc = simplify(so3ToVec(dT01_mc(1:3, 1:3)*T01_mc(1:3,1:3).'));
 %dR01_mc = dT01_mc(1:3, 1:3);
@@ -151,22 +173,31 @@ v01_mc = dT01_mc(1:3, 4);
 w02_mc = simplify(so3ToVec(dT02_mc(1:3, 1:3)*T02_mc(1:3,1:3).'));
 %dR02_mc = dT02_mc(1:3, 1:3);
 v02_mc = dT02_mc(1:3, 4);
+w02p_mc = simplify(so3ToVec(dT02p_mc(1:3, 1:3)*T02p_mc(1:3,1:3).'));
+%dR02_mc = dT02_mc(1:3, 1:3);
+v02p_mc = dT02p_mc(1:3, 4);
+w02pp_mc = simplify(so3ToVec(dT02pp_mc(1:3, 1:3)*T02pp_mc(1:3,1:3).'));
+%dR02_mc = dT02_mc(1:3, 1:3);
+v02pp_mc = dT02pp_mc(1:3, 4);
 %dR03_mc = dT03_mc(1:3, 1:3);
 w03_mc = simplify(so3ToVec(dT03_mc(1:3, 1:3)*T03_mc(1:3,1:3).'));
 v03_mc = dT03_mc(1:3, 4);
 
 %%
 % Kinetic energy
-Ke = 1/2*m1*v01_mc.'*v01_mc + 1/2*m2*v02_mc.'*v02_mc + 1/2*m3*v03_mc.'*v03_mc;
+Ke = 1/2*m1*(v01_mc.')*v01_mc + 1/2*m2*(v02_mc.')*v02_mc + 1/2*m3*(v03_mc.')*v03_mc +...
+    1/2*m2p*(v02p_mc.')*v02p_mc + 1/2*m2pp*(v02pp_mc.')*v02pp_mc;
 Ke = Ke + 1/2*w01_mc.'*inertia_tensor2world(T01_mc, I1)*w01_mc +...
     1/2*w02_mc.'*inertia_tensor2world(T02_mc, I2)*w02_mc +...
+    1/2*w02p_mc.'*inertia_tensor2world(T02p_mc, I2p)*w02p_mc +...
+    1/2*w02pp_mc.'*inertia_tensor2world(T02pp_mc, I2pp)*w02pp_mc +...
     1/2*w03_mc.'*inertia_tensor2world(T03_mc, I3)*w03_mc;
 Ke = simplify(Ke);
 
 %%
 % Potential energy
 g = [0 0 -0.981];
-Pe = simplify(dot(p01_mc, -g)*m1 + dot(p02_mc, -g)*m2 + dot(p03_mc, -g)*m3);
+Pe = simplify(dot(p01_mc, -g)*m1 + dot(p02_mc, -g)*m2 + dot(p03_mc, -g)*m3 + dot(p02p_mc, -g)*m2p + dot(p02pp_mc, -g)*m2pp);
 
 %%
 % Lagrangian
@@ -192,7 +223,7 @@ Tau = [tau1; tau2; tau3];
 %%
 % Write energy function in linear equation of inertia parameters
 %X = [delta_L1; delta_L2; delta_L3];
-X = [delta_L1; delta_A1; delta_L2; delta_A2; delta_L3; delta_A3];
+X = [delta_L1; delta_A1; delta_L2; delta_A2; delta_L2p; delta_A2p; delta_L2pp; delta_A2pp; delta_L3; delta_A3];
 % Energy
 %h = equationsToMatrix(L, X);
 % Torque
