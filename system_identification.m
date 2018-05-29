@@ -84,7 +84,7 @@ if visualize_transform
     axis equal
     for idx = 1:9
         %T_num = subs(T(:,:,idx), {q1 q2 q2p q4 q5 q6 q7}, {0 0 0 0 0.2 0.0 0.4});
-        T_num = subs(T(:,:,idx), {q1 q2 q3 q4 q5 q6 q7}, {0 0.2 0 0 0.2 0.0 0.4});
+        T_num = subs(T(:,:,idx), {q1 q2 q3 q4 q5 q6 q7}, {0 -0.2 0.2 0 0.2 0.0 0.4});
         p = T_num*([0 0 0 1]');
         x = T_num*([0.1 0 0 1]');
         y = T_num*([0 0.1 0 1]');
@@ -106,17 +106,17 @@ end
 syms Lxx1 Lxy1 Lxz1 Lyy1 Lyz1 Lzz1 lx1 ly1 lz1 m1 real;
 syms Fv1 Fc1 Fo1 real;
 [delta_L1, r1, I1] = inertia_bary2std(Lxx1, Lxy1, Lxz1, Lyy1, Lyz1, Lzz1, lx1, ly1, lz1, m1);
-delta_A1 = [Fv1; Fc1; Fo1];
+delta_A1 = [Fv1;];% Fc1; Fo1];
 %delta_A1 = [];
 syms Lxx2 Lxy2 Lxz2 Lyy2 Lyz2 Lzz2 lx2 ly2 lz2 m2 real;
 syms Fv2 Fc2 Fo2 real;
 [delta_L2, r2, I2] = inertia_bary2std(Lxx2, Lxy2, Lxz2, Lyy2, Lyz2, Lzz2, lx2, ly2, lz2, m2);
-delta_A2 = [Fv2; Fc2; Fo2];
+delta_A2 = [Fv2;];% Fc2; Fo2];
 %delta_A2 = [];
 syms Lxx3 Lxy3 Lxz3 Lyy3 Lyz3 Lzz3 lx3 ly3 lz3 m3 real;
 syms Fv3 Fc3 Fo3 real;
 [delta_L3, r3, I3] = inertia_bary2std(Lxx3, Lxy3, Lxz3, Lyy3, Lyz3, Lzz3, lx3, ly3, lz3, m3);
-delta_A3 = [Fv3; Fc3; Fo3];
+delta_A3 = [Fv3;];% Fc3; Fo3];
 %delta_A3 = [];
 %%
 % Linear and rotational velocities of link mass centers 
@@ -145,27 +145,27 @@ dT03_mc = subs(dT03_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {
 dT01_mc = subs(dT01_mc, {q1t, q2t, q3t}, {q1, q2, q3});
 dT02_mc = subs(dT02_mc, {q1t, q2t, q3t}, {q1, q2, q3});
 dT03_mc = subs(dT03_mc, {q1t, q2t, q3t}, {q1, q2, q3});
-w01_mc = simplify(so3ToVec(dT01_mc(1:3, 1:3)*T01_mc(1:3,1:3).'));
+w01_mc = simplify(so3ToVec(dT01_mc(1:3, 1:3)*(T01_mc(1:3,1:3).')));
 %dR01_mc = dT01_mc(1:3, 1:3);
 v01_mc = dT01_mc(1:3, 4);
-w02_mc = simplify(so3ToVec(dT02_mc(1:3, 1:3)*T02_mc(1:3,1:3).'));
+w02_mc = simplify(so3ToVec(dT02_mc(1:3, 1:3)*(T02_mc(1:3,1:3).')));
 %dR02_mc = dT02_mc(1:3, 1:3);
 v02_mc = dT02_mc(1:3, 4);
 %dR03_mc = dT03_mc(1:3, 1:3);
-w03_mc = simplify(so3ToVec(dT03_mc(1:3, 1:3)*T03_mc(1:3,1:3).'));
+w03_mc = simplify(so3ToVec(dT03_mc(1:3, 1:3)*(T03_mc(1:3,1:3).')));
 v03_mc = dT03_mc(1:3, 4);
 
 %%
 % Kinetic energy
-Ke = 1/2*m1*v01_mc.'*v01_mc + 1/2*m2*v02_mc.'*v02_mc + 1/2*m3*v03_mc.'*v03_mc;
-Ke = Ke + 1/2*w01_mc.'*inertia_tensor2world(T01_mc, I1)*w01_mc +...
-    1/2*w02_mc.'*inertia_tensor2world(T02_mc, I2)*w02_mc +...
-    1/2*w03_mc.'*inertia_tensor2world(T03_mc, I3)*w03_mc;
+Ke = 1/2*m1*(v01_mc.')*v01_mc + 1/2*m2*(v02_mc.')*v02_mc + 1/2*m3*(v03_mc.')*v03_mc;
+Ke = Ke + 1/2*(w01_mc.')*inertia_tensor2world(T01_mc, I1)*w01_mc +...
+    1/2*(w02_mc.')*inertia_tensor2world(T02_mc, I2)*w02_mc +...
+    1/2*(w03_mc.')*inertia_tensor2world(T03_mc, I3)*w03_mc;
 Ke = simplify(Ke);
 
 %%
 % Potential energy
-g = [0 0 -0.981];
+g = [0 0 -9.81];
 Pe = simplify(dot(p01_mc, -g)*m1 + dot(p02_mc, -g)*m2 + dot(p03_mc, -g)*m3);
 
 %%
@@ -175,20 +175,21 @@ L = Ke - Pe;
 tau1 = subs(diff(subs(diff(L, dq1), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
     - diff(L, q1)...
-    + Fv1*dq1 + Fc1*sign(dq1) + Fo1;
+    + Fv1*dq1;% + Fc1*sign(dq1) + Fo1;
 % tau1 = simplify(tau1);
 tau2 = subs(diff(subs(diff(L, dq2), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
     - diff(L, q2)...
-    + Fv2*dq2 + Fc2*sign(dq2) + Fo2;
+    + Fv2*dq2;% + Fc2*sign(dq2) + Fo2;
 % tau2 = simplify(tau2);
 tau3 = subs(diff(subs(diff(L, dq3), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
     - diff(L, q3)...
-    + Fv3*dq3 + Fc3*sign(dq3) + Fo3;
+    + Fv3*dq3;% + Fc3*sign(dq3) + Fo3;
 % tau3 = simplify(tau3);
 
 Tau = [tau1; tau2; tau3];
+
 %%
 % Write energy function in linear equation of inertia parameters
 %X = [delta_L1; delta_L2; delta_L3];
@@ -268,11 +269,11 @@ h_b = h*P(:,1:b);
 tr.h_b = h_b;
 % Fundamental frequency
 PI = 3.1415926;
-w_f = 2*PI*0.125;
+w_f = 2*PI*0.1;
 % Number of harmonics
 n_H = 6;
 tr_file_name = "data/tr.mat";
-regenerate_trajectory = 1;
+regenerate_trajectory = 0;
 % if file exists, load it; otherwise, compute one.
 if 2 == exist(tr_file_name) && regenerate_trajectory == 0
     load(tr_file_name);
@@ -296,7 +297,7 @@ q3_data_raw = csvread(q3_file_name);
 
 %%
 % Get Acceleration by differentiation
-sampling_freq = 500;
+sampling_freq = 200;
 % d_t = 1/sampling_freq;
 % dq_f = q1_data_raw(3:end, 2);
 % dq_b = q1_data_raw(1:end-2, 2);
@@ -311,9 +312,9 @@ q3_data = raw_data2data(q3_data_raw, sampling_freq);
 
 %%
 % remove abnormal acceleration data
-max_acc = 2.5;
-max_vel_change = 0.3;
-[q1_data, q2_data, q3_data] = remove_abnormal_acc_data(q1_data, q2_data, q3_data, max_acc, max_vel_change);
+% max_acc = 2.5;
+% max_vel_change = 0.2;
+% [q1_data, q2_data, q3_data] = remove_abnormal_acc_data(q1_data, q2_data, q3_data, max_acc, max_vel_change);
 
 %%
 % filter design
@@ -333,7 +334,7 @@ plot_data(q1_data, q2_data, q3_data, q1_data_filted, q2_data_filted, q3_data_fil
 
 %%
 % remove near zero velocity data and outlier
-vel_threshold = 0.01;
+vel_threshold = 0.00;
 [q1_data_no_zero, q2_data_no_zero, q3_data_no_zero] = remove_near_zero_vel_data(q1_data_filted,...
     q2_data_filted, q3_data_filted, vel_threshold);
 
