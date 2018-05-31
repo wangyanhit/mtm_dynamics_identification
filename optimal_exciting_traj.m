@@ -28,12 +28,12 @@ tr.min_ddq = -10;
 q_init_max = 0.1;
 ab_init_max = 0.2;
 
-% q01 = rand()*q_init_max-q_init_max/2;
-% a1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-% b1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-% q02 = rand()*q_init_max-q_init_max/2;
-% a2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-% b2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+q01 = rand()*q_init_max-q_init_max/2;
+a1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+b1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+q02 = rand()*q_init_max-q_init_max/2;
+a2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+b2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
 % q03 = rand()*q_init_max-q_init_max/2;
 % a3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
 % b3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
@@ -57,18 +57,15 @@ ab_init_max = 0.2;
 % a3 = [-0.0693 -0.1555 0.3507 0.1921 -0.2333 0.2924].*0.99;
 % b3 = [-0.2159 0.0032 0.0134 -0.0092 -0.4652 -0.0492].*0.99;
 % large limit
-q01= -0.2565;
-a1= [-0.0432 0.0876 -0.0296 -0.1547 0.1460 0.1630];
-b1= [-0.1513 0.7446 -0.1736 -0.2973 -0.0745 -0.1692];
-q02= -0.3202;
-a2= [-0.6264 -0.0882 -0.4016 -0.0938 0.0178 -0.1788];
-b2= [0.0435 0.0206 0.0459 -0.1101 0.2631 -0.0097];
-q03= -0.3656;
-a3= [-0.0475 -0.2135 0.4993 0.0994 -0.2364 0.0822];
-b3= [-0.4528 -0.0563 0.1351 0.1387 -0.3307 -0.0984];
+% q01= -0.2565;
+% a1= [-0.0432 0.0876 -0.0296 -0.1547 0.1460 0.1630];
+% b1= [-0.1513 0.7446 -0.1736 -0.2973 -0.0745 -0.1692];
+% q02= -0.3202;
+% a2= [-0.6264 -0.0882 -0.4016 -0.0938 0.0178 -0.1788];
+% b2= [0.0435 0.0206 0.0459 -0.1101 0.2631 -0.0097];
 
 
-x0 = [q01 a1 b1 q02 a2 b2 q03 a3 b3];
+x0 = [q01 a1 b1 q02 a2 b2];
 [A, b] = A_traj(tr);
 Aeq = [];
 beq = [];
@@ -81,7 +78,7 @@ objfun = @(x)cond_traj(x, tr);
 nonlcon = [];
 %nonlcon = @(x)nonlcon_traj(x, h, tr);
 % options = optimoptions('fmincon','Display','iter','Algorithm','sqp');
-options = optimoptions(@fmincon,'Display','iter','Algorithm','active-set','MaxFunctionEvaluations',20000, 'MaxIterations', 20);
+options = optimoptions(@fmincon,'Display','iter','Algorithm','active-set','MaxFunctionEvaluations',20000, 'MaxIterations', 10);
 [x,fval,exitflag,output,lambda,grad,hessian] = fmincon(objfun,x0,A,b,Aeq,beq,lb,ub, nonlcon, options);
 
 tr.q01 = x(1);
@@ -91,10 +88,6 @@ b_c = 1+2*tr.n_H;
 tr.q02 = x(1+b_c);
 tr.a2 = x(2+b_c:1+tr.n_H+b_c);
 tr.b2 = x(2+tr.n_H+b_c:1+2*tr.n_H+b_c);
-b_c = (1+2*tr.n_H)*2;
-tr.q03 = x(1+b_c);
-tr.a3 = x(2+b_c:1+tr.n_H+b_c);
-tr.b3 = x(2+tr.n_H+b_c:1+2*tr.n_H+b_c);
 %cond_traj(x0, h, tr)
 
 

@@ -9,9 +9,9 @@ A = [];
 b = [];
 
 for t = vt
-    qi = zeros(3,l_v);
-    dqi = zeros(3,l_v);
-    ddqi = zeros(3,l_v);
+    qi = zeros(2,l_v);
+    dqi = zeros(2,l_v);
+    ddqi = zeros(2,l_v);
     
     q_tmp = zeros(1,f_num);
     q_tmp(1,1) = 1;
@@ -21,7 +21,6 @@ for t = vt
     end
     qi(1,1:f_num) = q_tmp;
     qi(2,1+f_num:2*f_num) = q_tmp;
-    qi(3,1+2*f_num:3*f_num) = q_tmp;
 
     q_tmp(1,1) = 0;
     for i = 1:tr.n_H
@@ -30,7 +29,6 @@ for t = vt
     end
     dqi(1,1:f_num) = q_tmp;
     dqi(2,1+f_num:2*f_num) = q_tmp;
-    dqi(3,1+2*f_num:3*f_num) = q_tmp;
     
     q_tmp(1,1) = 0;
     for i = 1:tr.n_H
@@ -39,7 +37,6 @@ for t = vt
     end
     ddqi(1,1:f_num) = q_tmp;
     ddqi(2,1+f_num:2*f_num) = q_tmp;
-    ddqi(3,1+2*f_num:3*f_num) = q_tmp;
     
 %     A = [A; qi; dqi; ddqi; -qi; -dqi; -ddqi];
 %     b_tmp1 = [tr.max_q1; tr.max_q2; tr.max_q3; tr.max_dq; tr.max_dq; tr.max_dq; tr.max_ddq; tr.max_ddq; tr.max_ddq;];
@@ -48,8 +45,8 @@ for t = vt
 
     % without acceleration limitation
     A = [A; qi; dqi; -qi; -dqi];
-    b_tmp1 = [tr.max_q1; tr.max_q2; tr.max_q3; tr.max_dq; tr.max_dq; tr.max_dq;];
-    b_tmp2 = [-tr.min_q1; -tr.min_q2; -tr.min_q3; tr.max_dq; tr.max_dq; tr.max_dq;];
+    b_tmp1 = [tr.max_q1; tr.max_q2; tr.max_dq; tr.max_dq;];
+    b_tmp2 = [-tr.min_q1; -tr.min_q2; tr.max_dq; tr.max_dq;];
     b = [b; b_tmp1; b_tmp2];
 end
 end

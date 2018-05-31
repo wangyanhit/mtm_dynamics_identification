@@ -30,9 +30,9 @@ H = zeros(tr.dof*t_num, tr.base_num);
 
 for k = 1:t_num
     t = vt(k);
-    qi = [v(1); v(f_num+1); v(f_num*2+1)];
-    dqi = zeros(3,1);
-    ddqi = zeros(3,1);
+    qi = [v(1); v(f_num+1)];
+    dqi = zeros(2,1);
+    ddqi = zeros(2,1);
     for j = 1:tr.dof
         for i =1:tr.n_H
             qi(j) = qi(j)+v((j-1)*f_num+1+i)/(tr.w_f*i)*sin(tr.w_f*i*t)...
@@ -46,7 +46,7 @@ for k = 1:t_num
 %     H = [H;subs(h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3},...
 %         {qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3)})];
 %     H = [H; h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3))];
-    H(3*(k-1)+1:3*(k-1)+3,:) = double(subs(tr.h, {q1, q2, q3, dq1, dq2, dq3, ddq1, ddq2, ddq3}, {qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3)}));% h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3));
+    H(2*(k-1)+1:2*(k-1)+2,:) = double(subs(tr.h, {q1, q2, dq1, dq2, ddq1, ddq2}, {qi(1), qi(2), dqi(1), dqi(2), ddqi(1), ddqi(2)}));% h_b_func(qi(1), qi(2), qi(3), dqi(1), dqi(2), dqi(3), ddqi(1), ddqi(2), ddqi(3));
 end
 %vpa(H,2)
 %size(H)
