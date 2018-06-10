@@ -36,9 +36,21 @@ ddq2pp = -ddq3;
 %%
 % Define DH parameters
 % Order: $a, \alpha, d \theta$
-dh_link1 = [1 0 0 q1]; % 1
-dh_link2 = [1 0 0 q2]; % 1 to 2
+% 2 and 3
+% dh_link0 = [0 pi/2 0 -pi/2];
+% dh_link1 = [0.279 0 0 q1-pi/2];%[1 0 0 q1]; % 1
+% dh_link2 = [0.365 -pi/2 0 q2+pi/2];%1 0 0 q2]; % 1 to 2
+% 
+% T00p = dhparam2matrix(dh_link0);
+% T0p1 = dhparam2matrix(dh_link1);
+% T12 = dhparam2matrix(dh_link2);
+% 
+% T01 = T00p*T0p1;
+% T02 = T01*T12;
 
+% 1 and 2
+dh_link1 = [0 pi/2 0 q1-pi/2]; % 1
+dh_link2 = [0.279 0 0 q2-pi/2]; % 1 to 2
 
 T01 = dhparam2matrix(dh_link1);
 T12 = dhparam2matrix(dh_link2);
@@ -227,7 +239,7 @@ PI = 3.1415926;
 w_f = 2*PI*0.1;
 % Number of harmonics
 n_H = 6;
-tr_file_name = "data/tr2link.mat";
+tr_file_name = "data/tr2link12_mtm.mat";
 regenerate_trajectory = 0;
 % if file exists, load it; otherwise, compute one.
 if 2 == exist(tr_file_name) && regenerate_trajectory == 0
@@ -243,14 +255,14 @@ plot_excitation_traj(tr);
 
 %%
 % Loading data
-% q1_file_name = "data/experiment_data/50s/outer_yaw_joint_states.csv";
-% q1_data_raw = csvread(q1_file_name);
-% q2_file_name = "data/experiment_data/50s/shoulder_pitch_joint_states.csv";
-% q2_data_raw = csvread(q2_file_name);
+q1_file_name = "data/experiment_data/50s/outer_yaw_joint_states.csv";
+q1_data_raw = csvread(q1_file_name);
+q2_file_name = "data/experiment_data/50s/shoulder_pitch_joint_states.csv";
+q2_data_raw = csvread(q2_file_name);
 % q3_file_name = "data/experiment_data/50s/elbow_pitch_joint_states.csv";
 % q3_data_raw = csvread(q3_file_name);
-q1_data_raw = q1_data_raw_2link(200:end,:);
-q2_data_raw = q2_data_raw_2link(200:end,:);
+% q1_data_raw = q1_data_raw_2link(200:end,:);
+% q2_data_raw = q2_data_raw_2link(200:end,:);
 %%
 % Get Acceleration by differentiation
 sampling_freq = 200;
@@ -273,7 +285,7 @@ q2_data = raw_data2data(q2_data_raw, sampling_freq);
 
 %%
 % filter design
-fc = 5;
+fc = 2;
 fs = sampling_freq;
 
 [b_f,a_f] = butter(10,fc/(fs/2));
@@ -304,7 +316,12 @@ vel_threshold = 0.00;
 XB1_ols = W_data\b_data;
 %%
 % predict torque
-predicted_vtau = W_data*XB1_ols;
+% predicted_vtau = W_data*XB1_ols;
+XB1_ols_no_friction = XB1_ols;
+% XB1_ols_no_friction(6) = 0;
+% XB1_ols_no_friction(8) = 0;
+predicted_vtau = W_data*XB1_ols_no_friction;
+
 l = size(predicted_vtau,1)/2;
 predicted_tau1 = zeros(l,1);
 predicted_tau2 = zeros(l,1);

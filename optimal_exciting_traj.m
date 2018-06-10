@@ -11,16 +11,17 @@ tr.h = h;
 % tr.max_q = 0.5;
 % tr.min_q = -0.5;
 q_delta = 0.25;
-tr.max_q1 = 0.785398 - q_delta;
-tr.min_q1 = -1.309 + q_delta;
 tr.max_q2 = 0.785398 - q_delta;
 tr.min_q2 = -1.785398 + q_delta;
 tr.max_q3 = 0.785398 - q_delta;
 tr.min_q3 = -1.785398 + q_delta;
 
+tr.max_q1 = 0.785398 - q_delta;
+tr.min_q1 = -1.309 + q_delta;
 
-tr.max_dq = 3;
-tr.min_dq = -3;
+
+tr.max_dq = 2;
+tr.min_dq = -2;
 % The acceleration constraints are removed
 tr.max_ddq = 10;
 tr.min_ddq = -10;
