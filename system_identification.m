@@ -318,7 +318,7 @@ q3_data = raw_data2data(q3_data_raw, sampling_freq);
 
 %%
 % filter design
-fc = 5;
+fc = 2;
 fs = sampling_freq;
 
 [b_f,a_f] = butter(10,fc/(fs/2));
