@@ -8,15 +8,22 @@ tr.dof = size(h,1);
 tr.base_num = size(h,2);
 tr.h = h;
 
-% tr.max_q = 0.5;
-% tr.min_q = -0.5;
-q_delta = 0.25;
-tr.max_q1 = 0.785398 - q_delta;
-tr.min_q1 = -1.309 + q_delta;
-tr.max_q2 = 0.785398 - q_delta;
-tr.min_q2 = -1.785398 + q_delta;
-tr.max_q3 = 0.785398 - q_delta;
-tr.min_q3 = -1.785398 + q_delta;
+% large workspace
+% q_delta = 0.25;
+% tr.max_q1 = 0.785398 - q_delta;
+% tr.min_q1 = -1.309 + q_delta;
+% tr.max_q2 = 0.785398 - q_delta;
+% tr.min_q2 = -1.785398 + q_delta;
+% tr.max_q3 = 0.785398 - q_delta;
+% tr.min_q3 = -1.785398 + q_delta;
+% small workspace due to dvrk paper
+q_delta = deg2rad(5);
+tr.max_q1 = deg2rad(65) - q_delta;
+tr.min_q1 = deg2rad(-40) + q_delta;
+tr.max_q2 = deg2rad(50) - q_delta;
+tr.min_q2 = deg2rad(-15) + q_delta;
+tr.max_q3 = deg2rad(35) - q_delta;
+tr.min_q3 = deg2rad(-50) + q_delta;
 
 
 tr.max_dq = 3;
@@ -28,15 +35,15 @@ tr.min_ddq = -10;
 q_init_max = 0.1;
 ab_init_max = 0.2;
 
-% q01 = rand()*q_init_max-q_init_max/2;
-% a1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-% b1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-% q02 = rand()*q_init_max-q_init_max/2;
-% a2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-% b2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-% q03 = rand()*q_init_max-q_init_max/2;
-% a3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
-% b3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+q01 = rand()*q_init_max-q_init_max/2;
+a1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+b1 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+q02 = rand()*q_init_max-q_init_max/2;
+a2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+b2 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+q03 = rand()*q_init_max-q_init_max/2;
+a3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
+b3 = rand(1,tr.n_H)*ab_init_max-ab_init_max/2;
 
 % q01= -0.3909;
 % a1= [0.0415 0.3569 0.1357 -0.0863 0.0283 -0.0791];
@@ -57,15 +64,15 @@ ab_init_max = 0.2;
 % a3 = [-0.0693 -0.1555 0.3507 0.1921 -0.2333 0.2924].*0.99;
 % b3 = [-0.2159 0.0032 0.0134 -0.0092 -0.4652 -0.0492].*0.99;
 % large limit
-q01= -0.2565;
-a1= [-0.0432 0.0876 -0.0296 -0.1547 0.1460 0.1630];
-b1= [-0.1513 0.7446 -0.1736 -0.2973 -0.0745 -0.1692];
-q02= -0.3202;
-a2= [-0.6264 -0.0882 -0.4016 -0.0938 0.0178 -0.1788];
-b2= [0.0435 0.0206 0.0459 -0.1101 0.2631 -0.0097];
-q03= -0.3656;
-a3= [-0.0475 -0.2135 0.4993 0.0994 -0.2364 0.0822];
-b3= [-0.4528 -0.0563 0.1351 0.1387 -0.3307 -0.0984];
+% q01= -0.2565;
+% a1= [-0.0432 0.0876 -0.0296 -0.1547 0.1460 0.1630];
+% b1= [-0.1513 0.7446 -0.1736 -0.2973 -0.0745 -0.1692];
+% q02= -0.3202;
+% a2= [-0.6264 -0.0882 -0.4016 -0.0938 0.0178 -0.1788];
+% b2= [0.0435 0.0206 0.0459 -0.1101 0.2631 -0.0097];
+% q03= -0.3656;
+% a3= [-0.0475 -0.2135 0.4993 0.0994 -0.2364 0.0822];
+% b3= [-0.4528 -0.0563 0.1351 0.1387 -0.3307 -0.0984];
 
 
 x0 = [q01 a1 b1 q02 a2 b2 q03 a3 b3];
@@ -81,7 +88,7 @@ objfun = @(x)cond_traj(x, tr);
 nonlcon = [];
 %nonlcon = @(x)nonlcon_traj(x, h, tr);
 % options = optimoptions('fmincon','Display','iter','Algorithm','sqp');
-options = optimoptions(@fmincon,'Display','iter','Algorithm','active-set','MaxFunctionEvaluations',20000, 'MaxIterations', 20);
+options = optimoptions(@fmincon,'Display','iter','Algorithm','active-set','MaxFunctionEvaluations',20000, 'MaxIterations', 60);
 [x,fval,exitflag,output,lambda,grad,hessian] = fmincon(objfun,x0,A,b,Aeq,beq,lb,ub, nonlcon, options);
 
 tr.q01 = x(1);
