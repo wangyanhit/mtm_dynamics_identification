@@ -273,7 +273,7 @@ w_f = 2*PI*0.1;
 % Number of harmonics
 n_H = 6;
 %tr_file_name = "data/tr.mat"; % large workspace
-tr_file_name = "data/tr_s2.mat"; % small workspace
+tr_file_name = "data/tr_s2.mat"; % small workspace 1-2 A &B
 regenerate_trajectory = 0;
 % if file exists, load it; otherwise, compute one.
 if 2 == exist(tr_file_name) && regenerate_trajectory == 0
