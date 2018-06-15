@@ -273,7 +273,7 @@ w_f = 2*PI*0.1;
 % Number of harmonics
 n_H = 6;
 %tr_file_name = "data/tr.mat"; % large workspace
-tr_file_name = "data/tr_s.mat"; % small workspace
+tr_file_name = "data/tr_s2.mat"; % small workspace
 regenerate_trajectory = 0;
 % if file exists, load it; otherwise, compute one.
 if 2 == exist(tr_file_name) && regenerate_trajectory == 0
@@ -361,14 +361,20 @@ for i = 1:l
     predicted_tau2(i) = predicted_vtau(3*(i-1)+2);
     predicted_tau3(i) = predicted_vtau(3*(i-1)+3);
 end
-it =1:l;
+it =(1:l)/200.0;
 figure
 subplot(3,1,1)
 plot(it, q1_data_no_zero(:,4), it, predicted_tau1);
+xlabel("t (s)");
+ylabel("Joint1 Torque (N*m)");
 subplot(3,1,2)
 plot(it, q2_data_no_zero(:,4), it, predicted_tau2);
+xlabel("t (s)");
+ylabel("Joint2 Torque (N*m)");
 subplot(3,1,3)
 plot(it, q3_data_no_zero(:,4), it, predicted_tau3);
+xlabel("t (s)");
+ylabel("Joint3 Torque (N*m)");
 clear it l;
 % %%
 % % Generate regression matrix
@@ -448,144 +454,4 @@ plot(it, q2_data_no_zero(:,4), it, wls_predicted_tau2);
 subplot(3,1,3)
 plot(it, q3_data_no_zero(:,4), it, wls_predicted_tau3);
 clear it l;
-%%
-% Filter design
-
-% Design a 7th order lowpass IIR elliptic filter with cutoff frequency of 75 Hz.
-
-% Fnorm = 75/(Fs/2); % Normalized frequency
-% df = designfilt('lowpassiir',...
-%                'PassbandFrequency',Fnorm,...
-%                'FilterOrder',7,...
-%                'PassbandRipple',1,...
-%                'StopbandAttenuation',60);
-%%
-% Visualization to see if the transformations are right
-% figure
-% hold on
-% for link = fieldnames(dh_params) 
-%     for idx = 1:length(link)
-%         T = dh_params.(link{idx}).T_base2current;
-%         T = subs(T, {q1 q2 q3 q4 q5 q6 q7}, {0 0 0 0 0 0 0});
-%         p = T*([0 0 0 1]');
-%         x = T*([0.1 0 0 1]');
-%         y = T*([0 0.1 0 1]');
-%         z = T*([0 0 0.1 1]');
-%         plot3([p(1) x(1)], [p(2) x(2)], [p(3) x(3)], 'r')
-%         plot3([p(1) y(1)], [p(2) y(2)], [p(3) y(3)], 'g')
-%         plot3([p(1) z(1)], [p(2) z(2)], [p(3) z(3)], 'b')
-%         text(p(1), p(2), p(3), num2str(idx));
-%     end
-% end
-
-
-
-
-% frame_names = ["1" "2" "3" "4" "5" "6" "7" "2p" "2pp"];
-
-% dh_params.link1.param = [0 pi/2 0 q1];
-% dh_params.link1.prev = '0';
-% dh_params.link1.prev_link = 0;
-% dh_params.link2.param = [0.279 0 0 q2];
-% dh_params.link2.prev = '1';
-% dh_params.link2.prev_link = dh_params.link1;
-% dh_params.link3.param = [0.365 -pi/2 0 q3];
-% dh_params.link3.prev = '2';
-% dh_params.link3.prev_link = dh_params.link2;
-% dh_params.link4.param = [0 pi/2 0.151 q4];
-% dh_params.link4.prev = '3';
-% dh_params.link4.prev_link = dh_params.link3;
-% dh_params.link5.param = [0 -pi/2 0 q5];
-% dh_params.link5.prev = '4';
-% dh_params.link5.prev_link = dh_params.link4;
-% dh_params.link6.param = [0 pi/2 0 q6];
-% dh_params.link6.prev = '5';
-% dh_params.link6.prev_link = dh_params.link5;
-% dh_params.link7.param = [0 0 0 q7];
-% dh_params.link7.prev = '6';
-% dh_params.link7.prev_link = dh_params.link6;
-% dh_params.link2p.param = [0.1 0 0 q2p];
-% dh_params.link2p.prev = '1';
-% dh_params.link2p.prev_link = dh_params.link1;
-% dh_params.link2pp.param = [0.279 0 0 q2pp];
-% dh_params.link2pp.prev = '2p';
-% dh_params.link2pp.prev_link = dh_params.link2p;
-% dh_params = [['1' '0' 0 pi/2 0 q1];...
-%             ['2' '1' 0.279 0 0 q2];...
-%             ['2p' '1' 0.1 0 0 q2p];...
-%             ['2pp' '2p' 0.279 0 0 q2pp];...
-%             ['3' '2' 0.365 -pi/2 0 q3];...
-%             ['4' '3' 0 pi/2 0.151 q4];...
-%             ['5' '4' 0 -pi/2 0 q5];...
-%             ['6' '5' 0 pi/2 0 q6];...
-%             ['7' '6' 0 0 0 q7]];
-
-%% 
-% Transformations from frame i-1 to frame i and from base to i
-% for link = fieldnames(dh_params)
-%     for idx = 1:length(link)
-%         dh_params.(link{idx}).T_prev2current = dhparam2matrix(dh_params.(link{idx}).param);
-%         if idx == 1
-%             dh_params.(link{idx}).T_base2current = dh_params.(link{idx}).T_prev2current;
-%         else
-%             prev_idx = find(frame_names == dh_params.(link{idx}).prev);
-%             dh_params.(link{idx}).T_base2current = dh_params.(link{prev_idx}).T_base2current*dh_params.(link{idx}).T_prev2current;
-%         end
-%     end
-% end
-%%
-% Visualization to see if the transformations are right
-% figure
-% hold on
-% for link = fieldnames(dh_params) 
-%     for idx = 1:length(link)
-%         T = dh_params.(link{idx}).T_base2current;
-%         T = subs(T, {q1 q2 q3 q4 q5 q6 q7}, {0 0 0 0 0 0 0});
-%         p = T*([0 0 0 1]');
-%         x = T*([0.1 0 0 1]');
-%         y = T*([0 0.1 0 1]');
-%         z = T*([0 0 0.1 1]');
-%         plot3([p(1) x(1)], [p(2) x(2)], [p(3) x(3)], 'r')
-%         plot3([p(1) y(1)], [p(2) y(2)], [p(3) y(3)], 'g')
-%         plot3([p(1) z(1)], [p(2) z(2)], [p(3) z(3)], 'b')
-%         text(p(1), p(2), p(3), num2str(idx));
-%     end
-% end
-
-% T01 = dhparam2matrix(dh_link1);
-% T12 = dhparam2matrix(dh_link2);
-% T23 = dhparam2matrix(dh_link3);
-% T34 = dhparam2matrix(dh_link4);
-% T45 = dhparam2matrix(dh_link5);
-% T56 = dhparam2matrix(dh_link6);
-% T67 = dhparam2matrix(dh_link7);
-% T12p = dhparam2matrix(dh_link2p);
-% T2p2pp = dhparam2matrix(dh_link2pp);
-% %%
-% % Transformation from 
-% T02 = T01*T12;
-% T03 = T02*T23;
-% T04 = T03*T34;
-% T05 = T04*T45;
-% T06 = T05*T56;
-% T07 = T06*T67;
-% T02p = T01*T12p;
-% T02pp = T02p*T2p2pp;
-%%
-% Define friction types
-
-%%
-
-
-%% Dynamic model generation
-
-
-%% Calclualte base parameters
-
-% QR factorization with colomn pivoting
-%[Q R P] = qr()
-
-%% Data processing
-
-%% Model identification
 
