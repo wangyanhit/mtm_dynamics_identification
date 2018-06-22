@@ -289,12 +289,19 @@ plot_excitation_traj(tr);
 
 %%
 % Loading data
-q1_file_name = "data/experiment_data/50s/outer_yaw_joint_states.csv";
-q1_data_raw = csvread(q1_file_name);
-q2_file_name = "data/experiment_data/50s/shoulder_pitch_joint_states.csv";
-q2_data_raw = csvread(q2_file_name);
-q3_file_name = "data/experiment_data/50s/elbow_pitch_joint_states.csv";
-q3_data_raw = csvread(q3_file_name);
+q1a_file_name = "data/experiment_data/50s/outer_yaw_joint_states.csv";
+q1a_data_raw = csvread(q1a_file_name);
+q2a_file_name = "data/experiment_data/50s/shoulder_pitch_joint_states.csv";
+q2a_data_raw = csvread(q2a_file_name);
+q3a_file_name = "data/experiment_data/50s/elbow_pitch_joint_states.csv";
+q3a_data_raw = csvread(q3a_file_name);
+
+q1b_file_name = "data/experiment_data/50s2/outer_yaw_joint_states.csv";
+q1b_data_raw = csvread(q1b_file_name);
+q2b_file_name = "data/experiment_data/50s2/shoulder_pitch_joint_states.csv";
+q2b_data_raw = csvread(q2b_file_name);
+q3b_file_name = "data/experiment_data/50s2/elbow_pitch_joint_states.csv";
+q3b_data_raw = csvread(q3b_file_name);
 
 %%
 % Get Acceleration by differentiation
@@ -307,9 +314,13 @@ sampling_freq = 200;
 % q1_data(:,1:2) = q1_data_raw(2:end-1,1:2);
 % q1_data(:,3) = (dq_f -dq_b)/(2*d_t);
 % q1_data(:,4) = q1_data_raw(2:end-1,3);
-q1_data = raw_data2data(q1_data_raw, sampling_freq);
-q2_data = raw_data2data(q2_data_raw, sampling_freq);
-q3_data = raw_data2data(q3_data_raw, sampling_freq);
+q1a_data = raw_data2data(q1a_data_raw, sampling_freq);
+q2a_data = raw_data2data(q2a_data_raw, sampling_freq);
+q3a_data = raw_data2data(q3a_data_raw, sampling_freq);
+
+q1b_data = raw_data2data(q1b_data_raw, sampling_freq);
+q2b_data = raw_data2data(q2b_data_raw, sampling_freq);
+q3b_data = raw_data2data(q3b_data_raw, sampling_freq);
 
 %%
 % remove abnormal acceleration data
@@ -326,32 +337,43 @@ fs = sampling_freq;
 freqz(b_f,a_f)
 
 %%
-% filt data
-q1_data_filted = filt_data(q1_data, b_f, a_f);
-q2_data_filted = filt_data(q2_data, b_f, a_f);
-q3_data_filted = filt_data(q3_data, b_f, a_f);
+% filt data a
+q1a_data_filted = filt_data(q1a_data, b_f, a_f);
+q2a_data_filted = filt_data(q2a_data, b_f, a_f);
+q3a_data_filted = filt_data(q3a_data, b_f, a_f);
 
-plot_data(q1_data, q2_data, q3_data, q1_data_filted, q2_data_filted, q3_data_filted, sampling_freq);
+plot_data(q1a_data, q2a_data, q3a_data, q1a_data_filted, q2a_data_filted, q3a_data_filted, sampling_freq);
+
+%%
+% filt data b
+q1b_data_filted = filt_data(q1b_data, b_f, a_f);
+q2b_data_filted = filt_data(q2b_data, b_f, a_f);
+q3b_data_filted = filt_data(q3b_data, b_f, a_f);
+
+plot_data(q1b_data, q2b_data, q3b_data, q1b_data_filted, q2b_data_filted, q3b_data_filted, sampling_freq);
 
 %%
 % remove near zero velocity data and outlier
 vel_threshold = 0.00;
-[q1_data_no_zero, q2_data_no_zero, q3_data_no_zero] = remove_near_zero_vel_data(q1_data_filted,...
-    q2_data_filted, q3_data_filted, vel_threshold);
+[q1a_data_no_zero, q2a_data_no_zero, q3a_data_no_zero] = ...
+    remove_near_zero_vel_data(q1a_data_filted, q2a_data_filted, q3a_data_filted, vel_threshold);
 
+
+[q1b_data_no_zero, q2b_data_no_zero, q3b_data_no_zero] = ...
+    remove_near_zero_vel_data(q1b_data_filted, q2b_data_filted, q3b_data_filted, vel_threshold);
 % q1_data_no_zero = q1_data_filted;
 % q2_data_no_zero = q2_data_filted;
 % q3_data_no_zero = q3_data_filted;
 %%
 % Generate regression matrix
-[W_data, b_data] = generate_regression_mat(q1_data_no_zero, q2_data_no_zero, q3_data_no_zero, h_b);
-
+[W_data_a, b_data_a] = generate_regression_mat(q1a_data_no_zero, q2a_data_no_zero, q3a_data_no_zero, h_b);
+[W_data_b, b_data_b] = generate_regression_mat(q1b_data_no_zero, q2b_data_no_zero, q3b_data_no_zero, h_b);
 %%
 % least square
-XB1_ols = W_data\b_data;
+XB1_ols = W_data_a\b_data_a;
 %%
 % predict torque
-predicted_vtau = W_data*XB1_ols;
+predicted_vtau = W_data_a*XB1_ols;
 l = size(predicted_vtau,1)/3;
 predicted_tau1 = zeros(l,1);
 predicted_tau2 = zeros(l,1);
@@ -364,48 +386,66 @@ end
 it =(1:l)/200.0;
 figure
 subplot(3,1,1)
-plot(it, q1_data_no_zero(:,4), it, predicted_tau1);
+plot(it, q1a_data_no_zero(:,4), it, predicted_tau1, it, q1a_data_no_zero(:,4)-predicted_tau1);
 xlabel("t (s)");
 ylabel("Joint1 Torque (N*m)");
+legend("Measured torque", "Predicted torque", "Torque error")
 subplot(3,1,2)
-plot(it, q2_data_no_zero(:,4), it, predicted_tau2);
+plot(it, q2a_data_no_zero(:,4), it, predicted_tau2, it, q2a_data_no_zero(:,4)-predicted_tau2);
 xlabel("t (s)");
 ylabel("Joint2 Torque (N*m)");
 subplot(3,1,3)
-plot(it, q3_data_no_zero(:,4), it, predicted_tau3);
+plot(it, q3a_data_no_zero(:,4), it, predicted_tau3, it, q3a_data_no_zero(:,4)-predicted_tau3);
 xlabel("t (s)");
 ylabel("Joint3 Torque (N*m)");
 clear it l;
-% %%
-% % Generate regression matrix
-% [W_raw_data, b_raw_data] = generate_regression_mat(q1_data, q2_data, q2_data, h_b);
-% predicted_vtau_raw = W_raw_data*XB1_ols;
-% l_raw = size(predicted_vtau_raw,1)/3;
-% predicted_tau1_raw = zeros(l_raw,1);
-% predicted_tau2_raw = zeros(l_raw,1);
-% predicted_tau3_raw = zeros(l_raw,1);
-% for i = 1:l_raw
-%     predicted_tau1(i) = predicted_vtau(3*(i-1)+1);
-%     predicted_tau2(i) = predicted_vtau(3*(i-1)+2);
-%     predicted_tau3(i) = predicted_vtau(3*(i-1)+3);
-% end
-% it =1:l_raw;
-% figure
-% subplot(3,1,1)
-% plot(it, q1_data_raw(:,4), it, predicted_tau1_raw);
-% subplot(3,1,2)
-% plot(it, q2_data_raw(:,4), it, predicted_tau2_raw);
-% subplot(3,1,3)
-% plot(it, q3_data_raw(:,4), it, predicted_tau3_raw);
-% clear it l_raw;
+
+
+%%
+% predict torque
+predicted_vtau = W_data_b*XB1_ols;
+l = size(predicted_vtau,1)/3;
+predicted_tau1 = zeros(l,1);
+predicted_tau2 = zeros(l,1);
+predicted_tau3 = zeros(l,1);
+for i = 1:l
+    predicted_tau1(i) = predicted_vtau(3*(i-1)+1);
+    predicted_tau2(i) = predicted_vtau(3*(i-1)+2);
+    predicted_tau3(i) = predicted_vtau(3*(i-1)+3);
+end
+it =(1:l)/200.0;
+figure
+subplot(3,1,1)
+plot(it, q1b_data_no_zero(:,4), it, predicted_tau1, it, q1b_data_no_zero(:,4)-predicted_tau1);
+xlabel("t (s)");
+ylabel("Joint1 Torque (N*m)");
+legend("Measured torque", "Predicted torque", "Torque error")
+subplot(3,1,2)
+plot(it, q2b_data_no_zero(:,4), it, predicted_tau2, it, q2b_data_no_zero(:,4)-predicted_tau2);
+xlabel("t (s)");
+ylabel("Joint2 Torque (N*m)");
+subplot(3,1,3)
+plot(it, q3b_data_no_zero(:,4), it, predicted_tau3, it, q3b_data_no_zero(:,4)-predicted_tau3);
+xlabel("t (s)");
+ylabel("Joint3 Torque (N*m)");
+clear it l;
 %%
 %
 % variance of the regression error
-var_reg_error_ols = norm(b_data - W_data*XB1_ols)/(length(b_data) - b);
+var_reg_error_ols_a = norm(b_data_a - W_data_a*XB1_ols)/(length(b_data_a) - b);
 % standard deviation of XB1_ols
-std_XB1_ols = sqrt(diag(var_reg_error_ols*inv(W_data.'*W_data)));
+std_XB1_ols_a = sqrt(diag(var_reg_error_ols_a*inv(W_data_a.'*W_data_a)));
 % percentage of standard deviation of XB1_ols
-pecent_std_XB1_ols = std_XB1_ols./abs(XB1_ols);
+pecent_std_XB1_ols_a = std_XB1_ols_a./abs(XB1_ols);
+
+%%
+%
+% variance of the regression error
+var_reg_error_ols_b = norm(b_data_b - W_data_b*XB1_ols)/(length(b_data_b) - b);
+% standard deviation of XB1_ols
+std_XB1_ols_b = sqrt(diag(var_reg_error_ols_b*inv(W_data_b.'*W_data_b)));
+% percentage of standard deviation of XB1_ols
+pecent_std_XB1_ols_b = std_XB1_ols_b./abs(XB1_ols);
 
 %%
 % weighted least square
