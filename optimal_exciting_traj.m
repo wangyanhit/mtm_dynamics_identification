@@ -88,7 +88,7 @@ objfun = @(x)cond_traj(x, tr);
 nonlcon = [];
 %nonlcon = @(x)nonlcon_traj(x, h, tr);
 % options = optimoptions('fmincon','Display','iter','Algorithm','sqp');
-options = optimoptions(@fmincon,'Display','iter','Algorithm','active-set','MaxFunctionEvaluations',20000, 'MaxIterations', 60);
+options = optimoptions(@fmincon,'Display','iter','Algorithm','active-set','MaxFunctionEvaluations',20000, 'MaxIterations', 100);
 [x,fval,exitflag,output,lambda,grad,hessian] = fmincon(objfun,x0,A,b,Aeq,beq,lb,ub, nonlcon, options);
 
 tr.q01 = x(1);

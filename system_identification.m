@@ -63,7 +63,7 @@ T05 = T04*T45;
 T06 = T05*T56;
 T07 = T06*T67;
 T02p = T01*T12p;
-T2pp = T02p*T2p2pp;
+T02pp = T02p*T2p2pp;
 
 T(:,:,1) = T01;
 T(:,:,2) = T02;
@@ -73,7 +73,7 @@ T(:,:,5) = T05;
 T(:,:,6) = T06;
 T(:,:,7) = T07;
 T(:,:,8) = T02p;
-T(:,:,9) = T2pp;
+T(:,:,9) = T02pp;
 
 %%
 % Visualization to see if the transformations are right
@@ -118,33 +118,59 @@ syms Fv3 Fc3 Fo3 real;
 [delta_L3, r3, I3] = inertia_bary2std(Lxx3, Lxy3, Lxz3, Lyy3, Lyz3, Lzz3, lx3, ly3, lz3, m3);
 delta_A3 = [Fv3;];% Fc3; Fo3];
 %delta_A3 = [];
+
+syms Lxx2p Lxy2p Lxz2p Lyy2p Lyz2p Lzz2p lx2p ly2p lz2p m2p real;
+syms Fv2p Fc2p Fo2p real;
+[delta_L2p, r2p, I2p] = inertia_bary2std(Lxx2p, Lxy2p, Lxz2p, Lyy2p, Lyz2p, Lzz2p, lx2p, ly2p, lz2p, m2p);
+delta_A2p = [Fv2p;];% Fc2; Fo2];
+%delta_A2p = [];
+
+syms Lxx2pp Lxy2pp Lxz2pp Lyy2pp Lyz2pp Lzz2pp lx2pp ly2pp lz2pp m2pp real;
+syms Fv2pp Fc2pp Fo2pp real;
+[delta_L2pp, r2pp, I2pp] = inertia_bary2std(Lxx2pp, Lxy2pp, Lxz2pp, Lyy2pp, Lyz2pp, Lzz2pp, lx2pp, ly2pp, lz2pp, m2pp);
+delta_A2pp = [Fv2pp;];% Fc2; Fo2];
+%delta_A2pp = [];
 %%
 % Linear and rotational velocities of link mass centers 
 % Tranformations for mass centers
 T01_mc = simplify(T01*trans_mat(r1));
 T02_mc = simplify(T02*trans_mat(r2));
 T03_mc = simplify(T03*trans_mat(r3));
+T02p_mc = simplify(T02p*trans_mat(r2p));
+T02pp_mc = simplify(T02pp*trans_mat(r2pp));
+
 
 p01_mc = T01_mc(1:3,4);
 p02_mc = T02_mc(1:3,4);
 p03_mc = T03_mc(1:3,4);
+p02p_mc = T02p_mc(1:3,4);
+p02pp_mc = T02pp_mc(1:3,4);
 
 syms t real;
 syms q1t(t) q2t(t) q3t(t)
 T01_mc_t = subs(T01_mc, {q1, q2, q3}, {q1t, q2t, q3t});
 T02_mc_t = subs(T02_mc, {q1, q2, q3}, {q1t, q2t, q3t});
 T03_mc_t = subs(T03_mc, {q1, q2, q3}, {q1t, q2t, q3t});
+T02p_mc_t = subs(T02p_mc, {q1, q2, q3}, {q1t, q2t, q3t});
+T02pp_mc_t = subs(T02pp_mc, {q1, q2, q3}, {q1t, q2t, q3t});
+
 
 dT01_mc_t = simplify(diff(T01_mc_t, t));
 dT02_mc_t = simplify(diff(T02_mc_t, t));
 dT03_mc_t = simplify(diff(T03_mc_t, t));
+dT02p_mc_t = simplify(diff(T02p_mc_t, t));
+dT02pp_mc_t = simplify(diff(T02pp_mc_t, t));
 
 dT01_mc = subs(dT01_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
 dT02_mc = subs(dT02_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
 dT03_mc = subs(dT03_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
+dT02p_mc = subs(dT02p_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
+dT02pp_mc = subs(dT02pp_mc_t, {diff(q1t(t), t), diff(q2t(t), t), diff(q3t(t), t)}, {dq1, dq2, dq3});
 dT01_mc = subs(dT01_mc, {q1t, q2t, q3t}, {q1, q2, q3});
 dT02_mc = subs(dT02_mc, {q1t, q2t, q3t}, {q1, q2, q3});
 dT03_mc = subs(dT03_mc, {q1t, q2t, q3t}, {q1, q2, q3});
+dT02p_mc = subs(dT02p_mc, {q1t, q2t, q3t}, {q1, q2, q3});
+dT02pp_mc = subs(dT02pp_mc, {q1t, q2t, q3t}, {q1, q2, q3});
 w01_mc = simplify(so3ToVec(dT01_mc(1:3, 1:3)*(T01_mc(1:3,1:3).')));
 %dR01_mc = dT01_mc(1:3, 1:3);
 v01_mc = dT01_mc(1:3, 4);
@@ -154,19 +180,28 @@ v02_mc = dT02_mc(1:3, 4);
 %dR03_mc = dT03_mc(1:3, 1:3);
 w03_mc = simplify(so3ToVec(dT03_mc(1:3, 1:3)*(T03_mc(1:3,1:3).')));
 v03_mc = dT03_mc(1:3, 4);
-
+w02p_mc = simplify(so3ToVec(dT02p_mc(1:3, 1:3)*(T02p_mc(1:3,1:3).')));
+%dR02_mc = dT02_mc(1:3, 1:3);
+v02p_mc = dT02p_mc(1:3, 4);
+w02pp_mc = simplify(so3ToVec(dT02pp_mc(1:3, 1:3)*(T02pp_mc(1:3,1:3).')));
+%dR02_mc = dT02_mc(1:3, 1:3);
+v02pp_mc = dT02pp_mc(1:3, 4);
 %%
 % Kinetic energy
-Ke = 1/2*m1*(v01_mc.')*v01_mc + 1/2*m2*(v02_mc.')*v02_mc + 1/2*m3*(v03_mc.')*v03_mc;
+Ke = 1/2*m1*(v01_mc.')*v01_mc + 1/2*m2*(v02_mc.')*v02_mc + 1/2*m3*(v03_mc.')*v03_mc +...
+    1/2*m2p*(v02p_mc.')*v02p_mc + 1/2*m2pp*(v02pp_mc.')*v02pp_mc;
 Ke = Ke + 1/2*(w01_mc.')*inertia_tensor2world(T01_mc, I1)*w01_mc +...
     1/2*(w02_mc.')*inertia_tensor2world(T02_mc, I2)*w02_mc +...
-    1/2*(w03_mc.')*inertia_tensor2world(T03_mc, I3)*w03_mc;
+    1/2*(w03_mc.')*inertia_tensor2world(T03_mc, I3)*w03_mc +...
+    1/2*(w02p_mc.')*inertia_tensor2world(T02p_mc, I2p)*w02p_mc +...
+    1/2*(w02pp_mc.')*inertia_tensor2world(T02pp_mc, I2pp)*w02pp_mc;
 Ke = simplify(Ke);
 
 %%
 % Potential energy
 g = [0 0 -9.81];
-Pe = simplify(dot(p01_mc, -g)*m1 + dot(p02_mc, -g)*m2 + dot(p03_mc, -g)*m3);
+Pe = simplify(dot(p01_mc, -g)*m1 + dot(p02_mc, -g)*m2 + dot(p03_mc, -g)*m3 +...
+    dot(p02p_mc, -g)*m2p + dot(p02pp_mc, -g)*m2pp);
 
 %%
 % Lagrangian
@@ -175,17 +210,17 @@ L = Ke - Pe;
 tau1 = subs(diff(subs(diff(L, dq1), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
     - diff(L, q1)...
-    + Fv1*dq1;% + Fc1*sign(dq1) + Fo1;
+    + 0;% Fv1*dq1;% + Fc1*sign(dq1) + Fo1;
 % tau1 = simplify(tau1);
 tau2 = subs(diff(subs(diff(L, dq2), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
     - diff(L, q2)...
-    + Fv2*dq2;% + Fc2*sign(dq2) + Fo2;
+    + 0;% Fv2*dq2 + Fv2p*dq2p + Fv2pp*dq2pp;% + Fc2*sign(dq2) + Fo2;
 % tau2 = simplify(tau2);
 tau3 = subs(diff(subs(diff(L, dq3), {q1, q2, q3, dq1, dq2 ,dq3}, {q1t, q2t, q3t, diff(q1t, t), diff(q2t, t), diff(q3t, t)}), t),...
     {diff(q1t, t, 2), diff(q2t, t, 2), diff(q3t, t, 2), diff(q1t, t), diff(q2t, t), diff(q3t, t), q1t, q2t, q3t}, {ddq1, ddq2 ,ddq3, dq1, dq2 ,dq3, q1, q2, q3})...
     - diff(L, q3)...
-    + Fv3*dq3;% + Fc3*sign(dq3) + Fo3;
+    + 0;% Fv3*dq3;% + Fc3*sign(dq3) + Fo3;
 % tau3 = simplify(tau3);
 
 Tau = [tau1; tau2; tau3];
@@ -193,7 +228,7 @@ Tau = [tau1; tau2; tau3];
 %%
 % Write energy function in linear equation of inertia parameters
 %X = [delta_L1; delta_L2; delta_L3];
-X = [delta_L1; delta_A1; delta_L2; delta_A2; delta_L3; delta_A3];
+X = [delta_L1; delta_A1; delta_L2; delta_A2; delta_L3; delta_A3; delta_L2p; delta_A2p; delta_L2pp; delta_A2pp];
 % Energy
 %h = equationsToMatrix(L, X);
 % Torque
@@ -203,7 +238,8 @@ h = equationsToMatrix(Tau, X);
 % This method is refered to the following papar
 % Gautier, Maxime. "Numerical calculation of the base inertial parameters of robots." Journal of Field Robotics 8.4 (1991): 485-506.
 
-rand_var_file_name = "data/rand_var.mat";
+%rand_var_file_name = "data/rand_var.mat";
+rand_var_file_name = "data/rand_var_parallel.mat";
 rand_var.rand_num = length(h)+5;
 
 if 2 == exist(rand_var_file_name)
@@ -273,7 +309,8 @@ w_f = 2*PI*0.1;
 % Number of harmonics
 n_H = 6;
 %tr_file_name = "data/tr.mat"; % large workspace
-tr_file_name = "data/tr_s2.mat"; % small workspace 1-2 A &B
+%tr_file_name = "data/tr_s2.mat"; % small workspace 1-2 A &B
+tr_file_name = "data/tr_pare_s1.mat"; % small workspace 1-2 A &B parellel links
 regenerate_trajectory = 0;
 % if file exists, load it; otherwise, compute one.
 if 2 == exist(tr_file_name) && regenerate_trajectory == 0
@@ -338,9 +375,18 @@ freqz(b_f,a_f)
 
 %%
 % filt data a
+removed_index = 20;
 q1a_data_filted = filt_data(q1a_data, b_f, a_f);
 q2a_data_filted = filt_data(q2a_data, b_f, a_f);
 q3a_data_filted = filt_data(q3a_data, b_f, a_f);
+
+q1a_data_filted = q1a_data_filted(removed_index:end,:);
+q2a_data_filted = q2a_data_filted(removed_index:end,:);
+q3a_data_filted = q3a_data_filted(removed_index:end,:);
+
+q1a_data = q1a_data(removed_index:end,:);
+q2a_data = q2a_data(removed_index:end,:);
+q3a_data = q3a_data(removed_index:end,:);
 
 plot_data(q1a_data, q2a_data, q3a_data, q1a_data_filted, q2a_data_filted, q3a_data_filted, sampling_freq);
 
@@ -349,6 +395,14 @@ plot_data(q1a_data, q2a_data, q3a_data, q1a_data_filted, q2a_data_filted, q3a_da
 q1b_data_filted = filt_data(q1b_data, b_f, a_f);
 q2b_data_filted = filt_data(q2b_data, b_f, a_f);
 q3b_data_filted = filt_data(q3b_data, b_f, a_f);
+
+q1b_data_filted = q1b_data_filted(removed_index:end,:);
+q2b_data_filted = q2b_data_filted(removed_index:end,:);
+q3b_data_filted = q3b_data_filted(removed_index:end,:);
+
+q1b_data = q1b_data(removed_index:end,:);
+q2b_data = q2b_data(removed_index:end,:);
+q3b_data = q3b_data(removed_index:end,:);
 
 plot_data(q1b_data, q2b_data, q3b_data, q1b_data_filted, q2b_data_filted, q3b_data_filted, sampling_freq);
 
