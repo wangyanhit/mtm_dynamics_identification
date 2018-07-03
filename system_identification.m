@@ -33,6 +33,18 @@ ddq2pp = -ddq3;
 % dq3 = -dq2 + dq2p;
 % dq2pp = -dq2p + dq2; 
 
+%% define to use classic or modified DH convension
+%
+use_modified_DH_convension = true;
+
+dh2mat_used = @dhparam2matrix;
+if use_modified_DH_convension
+    dh2mat_used = @modified_dhparam2matrix;
+    disp("Modified DH convension is used.");
+else
+    disp("Classic DH convension is used.");
+end
+
 %%
 % Define DH parameters
 % Order: $a, \alpha, d \theta$
@@ -46,16 +58,30 @@ dh_link5 = [0 -pi/2 0 q5]; % 4 to 5
 dh_link6 = [0 pi/2 0 q6-pi/2]; % 5 to 6
 dh_link7 = [0 0 0 q7]; % 6 to 7
 
-T01 = dhparam2matrix(dh_link1);
-T12 = dhparam2matrix(dh_link2);
-T23 = dhparam2matrix(dh_link3);
-T34 = dhparam2matrix(dh_link4);
-T45 = dhparam2matrix(dh_link5);
-T56 = dhparam2matrix(dh_link6);
-T67 = dhparam2matrix(dh_link7);
-T12p = dhparam2matrix(dh_link2p);
-T2p2pp = dhparam2matrix(dh_link2pp);
+if use_modified_DH_convension
+% Order: $a, \alpha, d \theta$
+    dh_link1 = [0 0 -0.21537 q1]; % 1
+    dh_link2 = [0 -pi/2 0 q2+pi/2]; % 1 to 2
+    dh_link2p = [0 -pi/2 0 q2p+pi]; % 1 to 2p
+    dh_link2pp = [0.1 0 0 q2pp-pi/2]; % 2p to 2pp
+    dh_link3 = [0.279 0 0 q3+pi/2]; % 2 to 3
+    dh_link4 = [0.365 -pi/2 0.151 q4]; % 3 to 4
+    dh_link5 = [0 pi/2 0 q5]; % 4 to 5
+    dh_link6 = [0 -pi/2 0 q6+pi/2]; % 5 to 6
+    dh_link7 = [0 pi/2 0 q7]; % 6 to 7
+end
 
+T01 = dh2mat_used(dh_link1);
+T12 = dh2mat_used(dh_link2);
+T23 = dh2mat_used(dh_link3);
+T34 = dh2mat_used(dh_link4);
+T45 = dh2mat_used(dh_link5);
+T56 = dh2mat_used(dh_link6);
+T67 = dh2mat_used(dh_link7);
+T12p = dh2mat_used(dh_link2p);
+T2p2pp = dh2mat_used(dh_link2pp);
+
+T00 = eye(4);
 T02 = T01*T12;
 T03 = T02*T23;
 T04 = T03*T34;
@@ -65,15 +91,16 @@ T07 = T06*T67;
 T02p = T01*T12p;
 T02pp = T02p*T2p2pp;
 
-T(:,:,1) = T01;
-T(:,:,2) = T02;
-T(:,:,3) = T03;
-T(:,:,4) = T04;
-T(:,:,5) = T05;
-T(:,:,6) = T06;
-T(:,:,7) = T07;
-T(:,:,8) = T02p;
-T(:,:,9) = T02pp;
+T(:,:,1) = T00;
+T(:,:,2) = T01;
+T(:,:,3) = T02;
+T(:,:,4) = T03;
+T(:,:,5) = T04;
+T(:,:,6) = T05;
+T(:,:,7) = T06;
+T(:,:,8) = T07;
+T(:,:,9) = T02p;
+T(:,:,10) = T02pp;
 
 %%
 % Visualization to see if the transformations are right
@@ -82,9 +109,9 @@ if visualize_transform
     figure
     hold on
     axis equal
-    for idx = 1:9
+    for idx = 1:10
         %T_num = subs(T(:,:,idx), {q1 q2 q2p q4 q5 q6 q7}, {0 0 0 0 0.2 0.0 0.4});
-        T_num = subs(T(:,:,idx), {q1 q2 q3 q4 q5 q6 q7}, {0 -0.2 0.2 0 0.2 0.0 0.4});
+        T_num = subs(T(:,:,idx), {q1 q2 q3 q4 q5 q6 q7}, {0.1 0 0 0 0 0 0});
         p = T_num*([0 0 0 1]');
         x = T_num*([0.1 0 0 1]');
         y = T_num*([0 0.1 0 1]');
@@ -92,7 +119,7 @@ if visualize_transform
         plot3([p(1) x(1)], [p(2) x(2)], [p(3) x(3)], 'r')
         plot3([p(1) y(1)], [p(2) y(2)], [p(3) y(3)], 'g')
         plot3([p(1) z(1)], [p(2) z(2)], [p(3) z(3)], 'b')
-        text(p(1), p(2), p(3), num2str(idx));
+        text(p(1), p(2), p(3), num2str(idx-1));
     end
     legend('x', 'y', 'z')
     xlabel('x (m)')
